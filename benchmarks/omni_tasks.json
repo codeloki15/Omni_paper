@@ -1,0 +1,446 @@
+{
+  "version": "1.0",
+  "description": "Omni benchmark task suite. 50 tasks across 4 categories: single-capability, multi-capability chain, HITL-trigger, and structural impossibility.",
+  "completion_criterion": "process_completion_agent called with non-error completion message within 500 rounds",
+  "backbone_llm": "gpt-4o",
+  "seeds": 3,
+  "categories": {
+    "single": "One capability required. Tests baseline reliability of individual capability execution.",
+    "chain": "Two or more capabilities required in sequence, with data dependency between steps.",
+    "hitl_trigger": "Tasks designed to trigger tactical HITL tier: ambiguous input or irreversible action pending.",
+    "structural_impossibility": "Tasks whose correct output depends on live environmental state. Structurally impossible for single-domain coding agents (Claude Code, Codex) regardless of code quality."
+  },
+  "tasks": [
+    {
+      "task_id": "S01",
+      "category": "single",
+      "description": "What is the current homepage headline of openai.com?",
+      "capabilities_required": ["web_browser"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "Agent returns the exact headline text visible on the live homepage",
+      "notes": "Tests live browser fetch — answer is not in training data"
+    },
+    {
+      "task_id": "S02",
+      "category": "single",
+      "description": "What's the weather in Tokyo right now?",
+      "capabilities_required": ["web_browser"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "Agent returns current temperature and conditions",
+      "notes": "Live data required"
+    },
+    {
+      "task_id": "S03",
+      "category": "single",
+      "description": "Generate a professional logo for a company called 'Lumina' — blue and white color scheme, modern minimalist style.",
+      "capabilities_required": ["image_generator"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "Image file generated and path returned",
+      "notes": "Tests image generation capability baseline"
+    },
+    {
+      "task_id": "S04",
+      "category": "single",
+      "description": "Write a Python script that reads a CSV file called sales.csv, computes the mean and std of the 'revenue' column, and prints the result.",
+      "capabilities_required": ["python_coder"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "Script executes without error and prints mean and std",
+      "notes": "Tests python capability baseline"
+    },
+    {
+      "task_id": "S05",
+      "category": "single",
+      "description": "Find all PDF files in the current working directory and list their names and sizes.",
+      "capabilities_required": ["file_finder"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "Agent returns list of PDF filenames and sizes",
+      "notes": "Tests file_finder baseline"
+    },
+    {
+      "task_id": "S06",
+      "category": "single",
+      "description": "Search for the latest news about 'large language models' and return the top 3 headlines with publication dates.",
+      "capabilities_required": ["web_browser"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "Agent returns 3 headlines with dates from live news sources",
+      "notes": "Live data required — tests search + extraction"
+    },
+    {
+      "task_id": "S07",
+      "category": "single",
+      "description": "Generate 3 variations of a banner image for a SaaS product called 'FlowDesk' — professional, dark theme.",
+      "capabilities_required": ["image_generator"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "3 image files generated",
+      "notes": "Tests multi-output image generation"
+    },
+    {
+      "task_id": "S08",
+      "category": "single",
+      "description": "Write and run a Python script that generates 100 random numbers from a normal distribution and plots a histogram. Save the plot as histogram.png.",
+      "capabilities_required": ["python_coder"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "histogram.png file exists after execution",
+      "notes": "Tests code execution + file output"
+    },
+    {
+      "task_id": "S09",
+      "category": "single",
+      "description": "Find all .py files in the src/ directory that contain the word 'planner'.",
+      "capabilities_required": ["file_finder"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "Agent returns list of matching file paths",
+      "notes": "Tests file search with content filtering"
+    },
+    {
+      "task_id": "S10",
+      "category": "single",
+      "description": "What is the current USD to EUR exchange rate?",
+      "capabilities_required": ["web_browser"],
+      "capability_count": 1,
+      "hitl_expected": false,
+      "completion_criterion": "Agent returns current rate from a live source",
+      "notes": "Live data required"
+    },
+    {
+      "task_id": "C01",
+      "category": "chain",
+      "description": "Find the 3 most cited papers on 'retrieval augmented generation' published in 2024, then write a Python script that generates a bar chart of their citation counts. Save as citations.png.",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "citations.png exists; chart contains 3 bars with paper titles and citation counts from live web data",
+      "notes": "Web data must feed into Python — tests cross-capability context propagation"
+    },
+    {
+      "task_id": "C02",
+      "category": "chain",
+      "description": "Find my resume file in Documents/ and email it to test@example.com with subject 'Application for Software Engineer role'.",
+      "capabilities_required": ["file_finder", "email_sender"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "Email sent with resume attached",
+      "notes": "File path from file_finder must be passed to email_sender — tests memory chaining"
+    },
+    {
+      "task_id": "C03",
+      "category": "chain",
+      "description": "Scrape the top 5 headlines from Hacker News right now, then write a Python script that scores each headline by estimated technical depth (1–5) using keyword heuristics and prints the ranked list.",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "Ranked list printed with live HN headlines — not training-time examples",
+      "notes": "Correct output depends entirely on live HN state"
+    },
+    {
+      "task_id": "C04",
+      "category": "chain",
+      "description": "Analyze the file data/sales.csv — find the top 3 products by revenue — then email me a summary at test@example.com.",
+      "capabilities_required": ["python_coder", "email_sender"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "Email sent containing correct top-3 products derived from actual CSV contents",
+      "notes": "Python output must flow into email body — tests memory chaining"
+    },
+    {
+      "task_id": "C05",
+      "category": "chain",
+      "description": "Search for the current price of NVIDIA stock, then write a Python script that projects its value over 12 months assuming 2%, 5%, and 10% monthly growth rates. Save the projection chart as nvidia_projection.png.",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "nvidia_projection.png exists; starting price matches live-fetched value",
+      "notes": "Live price must seed the projection — chart with training-data price is wrong"
+    },
+    {
+      "task_id": "C06",
+      "category": "chain",
+      "description": "Generate a logo for a startup called 'Nexus' and email it to design@example.com with subject 'Nexus logo draft'.",
+      "capabilities_required": ["image_generator", "email_sender"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "Email sent with generated image attached",
+      "notes": "Generated asset must be passed across capability boundary to email"
+    },
+    {
+      "task_id": "C07",
+      "category": "chain",
+      "description": "Find all Python files in src/ that import 'autogen', then email me a list of those files at test@example.com.",
+      "capabilities_required": ["file_finder", "email_sender"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "Email contains correct list of file paths from actual filesystem scan",
+      "notes": "File search results must transfer to email content"
+    },
+    {
+      "task_id": "C08",
+      "category": "chain",
+      "description": "Look up the latest version of the 'fastapi' Python package on PyPI, then write a requirements.txt entry pinning it to that exact version.",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "requirements.txt entry contains the version number currently shown on PyPI — not a training-time guess",
+      "notes": "Live version lookup must precede code generation"
+    },
+    {
+      "task_id": "C09",
+      "category": "chain",
+      "description": "Search for 3 open-source alternatives to Notion, then generate a comparison infographic image showing their key features.",
+      "capabilities_required": ["web_browser", "image_generator"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "Image generated containing 3 tools found via live search — not training-time examples",
+      "notes": "Browser results must feed image generation prompt"
+    },
+    {
+      "task_id": "C10",
+      "category": "chain",
+      "description": "Find all log files in logs/ directory created in the last 7 days, run a Python script to count ERROR occurrences in each, and email me the error report at test@example.com.",
+      "capabilities_required": ["file_finder", "python_coder", "email_sender"],
+      "capability_count": 3,
+      "hitl_expected": false,
+      "completion_criterion": "Email contains error counts derived from actual log file contents",
+      "notes": "3-capability chain — tests full memory propagation across 3 GroupChat boundaries"
+    },
+    {
+      "task_id": "C11",
+      "category": "chain",
+      "description": "Search for the top 3 AI research labs by number of NeurIPS 2024 accepted papers, then write a Python script to plot a bar chart and save it as neurips_labs.png.",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "neurips_labs.png exists; data sourced from live web, not training assumptions",
+      "notes": ""
+    },
+    {
+      "task_id": "C12",
+      "category": "chain",
+      "description": "Generate 5 product image variations for a water bottle called 'HydraFlow', then find the product description file in docs/ and email both the images and description to marketing@example.com.",
+      "capabilities_required": ["image_generator", "file_finder", "email_sender"],
+      "capability_count": 3,
+      "hitl_expected": false,
+      "completion_criterion": "Email sent with 5 images and description file attached",
+      "notes": "3-capability chain with asset + file handoff to email"
+    },
+    {
+      "task_id": "C13",
+      "category": "chain",
+      "description": "Scrape the job listings for 'machine learning engineer' on a major job board, extract salary ranges, then run a Python script to compute median salary and plot a distribution. Save as salary_dist.png.",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "salary_dist.png exists; salary data sourced from live job listings",
+      "notes": "Live scrape required — training data salary ranges are stale"
+    },
+    {
+      "task_id": "C14",
+      "category": "chain",
+      "description": "Find all markdown files in the docs/ directory, concatenate their contents, and email the combined document to docs@example.com.",
+      "capabilities_required": ["file_finder", "python_coder", "email_sender"],
+      "capability_count": 3,
+      "hitl_expected": false,
+      "completion_criterion": "Email sent with combined markdown content from actual files",
+      "notes": ""
+    },
+    {
+      "task_id": "C15",
+      "category": "chain",
+      "description": "Search for 'best Python libraries for data visualization in 2025', summarize the top 5 in a Python script as a printed comparison table.",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "hitl_expected": false,
+      "completion_criterion": "Table printed with libraries found via live search — not training-time list",
+      "notes": ""
+    },
+    {
+      "task_id": "H01",
+      "category": "hitl_trigger",
+      "hitl_condition": "ambiguous_input",
+      "description": "Book a flight to New York.",
+      "capabilities_required": ["web_browser"],
+      "capability_count": 1,
+      "hitl_expected": true,
+      "expected_hitl_tier": "tactical",
+      "expected_clarification_questions": ["departure city", "travel date", "return date", "budget", "preferred airline"],
+      "completion_criterion": "System pauses and requests clarification before browsing — does NOT attempt booking on assumed values",
+      "notes": "Under-interruption failure mode test — system must not proceed on ambiguous irreversible action"
+    },
+    {
+      "task_id": "H02",
+      "category": "hitl_trigger",
+      "hitl_condition": "ambiguous_input",
+      "description": "Send the report to the team.",
+      "capabilities_required": ["email_sender"],
+      "capability_count": 1,
+      "hitl_expected": true,
+      "expected_hitl_tier": "tactical",
+      "expected_clarification_questions": ["which report", "which team", "recipient email addresses"],
+      "completion_criterion": "System requests clarification on recipient and attachment before sending",
+      "notes": "Email with no recipient is structurally unresolvable without human input"
+    },
+    {
+      "task_id": "H03",
+      "category": "hitl_trigger",
+      "hitl_condition": "irreversible_action",
+      "description": "Delete the old project files.",
+      "capabilities_required": ["file_finder"],
+      "capability_count": 1,
+      "hitl_expected": true,
+      "expected_hitl_tier": "tactical",
+      "expected_clarification_questions": ["which directory", "what counts as old", "confirm deletion is intended"],
+      "completion_criterion": "System requests confirmation and clarification before any deletion — does NOT delete on assumed path",
+      "notes": "Irreversible + ambiguous — both conditions present simultaneously"
+    },
+    {
+      "task_id": "H04",
+      "category": "hitl_trigger",
+      "hitl_condition": "irreversible_action",
+      "description": "Email my CV to the job posting I mentioned earlier.",
+      "capabilities_required": ["web_browser", "file_finder", "email_sender"],
+      "capability_count": 3,
+      "hitl_expected": true,
+      "expected_hitl_tier": "tactical",
+      "expected_clarification_questions": ["which job posting", "confirm recipient email", "confirm CV file to use"],
+      "completion_criterion": "System asks for job posting URL, confirms recipient and CV before sending",
+      "notes": "Irreversible action (email cannot be unsent) on ambiguous target"
+    },
+    {
+      "task_id": "H05",
+      "category": "hitl_trigger",
+      "hitl_condition": "ambiguous_input",
+      "description": "Update the client presentation with the latest numbers.",
+      "capabilities_required": ["file_finder", "python_coder"],
+      "capability_count": 2,
+      "hitl_expected": true,
+      "expected_hitl_tier": "tactical",
+      "expected_clarification_questions": ["which presentation file", "which numbers", "what data source"],
+      "completion_criterion": "System requests clarification on file and data source before editing",
+      "notes": ""
+    },
+    {
+      "task_id": "H06",
+      "category": "hitl_trigger",
+      "hitl_condition": "ambiguous_input",
+      "description": "Run the analysis on the data.",
+      "capabilities_required": ["python_coder"],
+      "capability_count": 1,
+      "hitl_expected": true,
+      "expected_hitl_tier": "tactical",
+      "expected_clarification_questions": ["which data file", "what type of analysis"],
+      "completion_criterion": "System asks for data file path and analysis type before executing any code",
+      "notes": "Maximally ambiguous task — no executable interpretation without clarification"
+    },
+    {
+      "task_id": "H07",
+      "category": "hitl_trigger",
+      "hitl_condition": "irreversible_action",
+      "description": "Send the invoice to the client.",
+      "capabilities_required": ["file_finder", "email_sender"],
+      "capability_count": 2,
+      "hitl_expected": true,
+      "expected_hitl_tier": "tactical",
+      "expected_clarification_questions": ["which invoice file", "client email address", "confirm amount is correct"],
+      "completion_criterion": "System asks to confirm invoice file, recipient, and amount before sending",
+      "notes": "Financial document — irreversible and high-stakes"
+    },
+    {
+      "task_id": "H08",
+      "category": "hitl_trigger",
+      "hitl_condition": "ambiguous_input",
+      "description": "Fix the bug in the code.",
+      "capabilities_required": ["python_coder"],
+      "capability_count": 1,
+      "hitl_expected": true,
+      "expected_hitl_tier": "tactical",
+      "expected_clarification_questions": ["which file", "which bug", "what is the expected behavior"],
+      "completion_criterion": "System requests file path and bug description before attempting any code changes",
+      "notes": ""
+    },
+    {
+      "task_id": "SI01",
+      "category": "structural_impossibility",
+      "description": "Build a landing page that matches the visual style of stripe.com — same color palette, typography feel, and section layout. Generate the hero image to match.",
+      "capabilities_required": ["web_browser", "image_generator", "python_coder"],
+      "capability_count": 3,
+      "hitl_expected": false,
+      "why_impossible_for_coding_agents": "Correct color palette, typography, and layout must be extracted from the live stripe.com DOM at execution time. A coding agent generates from training-data knowledge of Stripe's old design — which may be outdated — and cannot generate a matching hero image.",
+      "completion_criterion": "HTML file exists with colors and layout derived from live DOM inspection; hero image generated during execution",
+      "baseline_expected_score": 0,
+      "notes": "Primary structural impossibility test — requires live browser + image gen + code in one task"
+    },
+    {
+      "task_id": "SI02",
+      "category": "structural_impossibility",
+      "description": "Scrape today's top 5 trending repositories on GitHub, generate a visual card image for each showing repo name, stars, and primary language, then email all 5 cards to test@example.com.",
+      "capabilities_required": ["web_browser", "image_generator", "email_sender"],
+      "capability_count": 3,
+      "hitl_expected": false,
+      "why_impossible_for_coding_agents": "Trending repos change daily — correct output requires live GitHub scrape. Coding agents cannot generate images or send emails.",
+      "completion_criterion": "5 images generated with correct live repo data; email sent with all 5 attached",
+      "baseline_expected_score": 0,
+      "notes": ""
+    },
+    {
+      "task_id": "SI03",
+      "category": "structural_impossibility",
+      "description": "Find my invoice template in the docs/ directory, fill it with today's date and the current USD/EUR exchange rate fetched live, then email the completed invoice to billing@example.com.",
+      "capabilities_required": ["file_finder", "web_browser", "python_coder", "email_sender"],
+      "capability_count": 4,
+      "hitl_expected": false,
+      "why_impossible_for_coding_agents": "Requires reading an actual file from disk, fetching a live exchange rate, populating the template with today's real date, and sending an email. No coding agent has all four execution pathways.",
+      "completion_criterion": "Email sent with invoice containing correct live exchange rate and today's date sourced from live fetch",
+      "baseline_expected_score": 0,
+      "notes": "4-capability chain — maximum complexity structural impossibility test"
+    },
+    {
+      "task_id": "SI04",
+      "category": "structural_impossibility",
+      "description": "Look up the latest stable version of the 'torch' package on PyPI right now, write a Python environment setup script pinning that exact version, run it to verify it installs cleanly, then email the verified requirements.txt to devops@example.com.",
+      "capabilities_required": ["web_browser", "python_coder", "email_sender"],
+      "capability_count": 3,
+      "hitl_expected": false,
+      "why_impossible_for_coding_agents": "Version must be fetched live from PyPI — training-data version may be outdated. Coding agents cannot send email. The verification run confirms the pinned version actually installs.",
+      "completion_criterion": "requirements.txt contains version number matching current PyPI listing; email sent with verified file",
+      "baseline_expected_score": 0,
+      "notes": ""
+    },
+    {
+      "task_id": "SI05",
+      "category": "structural_impossibility",
+      "description": "Search for the 3 most recent arXiv papers on 'multi-agent systems' published this week, generate a visual abstract card for each paper (title, authors, one-line summary), and email all 3 cards to research@example.com.",
+      "capabilities_required": ["web_browser", "image_generator", "email_sender"],
+      "capability_count": 3,
+      "hitl_expected": false,
+      "why_impossible_for_coding_agents": "Papers change weekly — correct output requires live arXiv search. Coding agents cannot generate visual cards or send email.",
+      "completion_criterion": "3 image cards generated from live arXiv search results published this week; email sent with cards attached",
+      "baseline_expected_score": 0,
+      "notes": "Closest to real research workflow — directly relevant to Omni's own use case"
+    }
+  ],
+  "summary": {
+    "total_tasks": 50,
+    "by_category": {
+      "single": 10,
+      "chain": 15,
+      "hitl_trigger": 8,
+      "structural_impossibility": 5
+    },
+    "note_on_gap": "50 tasks defined in spec; current file contains 38 (10 single + 15 chain + 8 HITL + 5 SI). Remaining 12 chain/single tasks to be added from real user session logs before running experiments.",
+    "capability_coverage": {
+      "web_browser": "appears in 25 tasks",
+      "python_coder": "appears in 22 tasks",
+      "email_sender": "appears in 15 tasks",
+      "image_generator": "appears in 8 tasks",
+      "file_finder": "appears in 10 tasks"
+    }
+  }
+}

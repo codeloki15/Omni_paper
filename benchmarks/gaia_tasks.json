@@ -1,0 +1,59 @@
+{
+  "version": "2.0",
+  "description": "5 hard tasks adapted from GAIA Level 2/3 evaluation set. Each requires multi-hop live web research + code execution. Training-data answers are stale or insufficient — Omni must browse to succeed.",
+  "source_benchmarks": ["GAIA Level 2-3 (Mialon et al., 2023)", "WebArena (Zhou et al., 2024)"],
+  "backbone": "claude-sonnet-4-6",
+  "difficulty_notes": "These tasks defeat single-LLM approaches: live data + multi-hop chains + code verification. GAIA Level 2 SOTA: ~52% (best tool-augmented agents, 2024).",
+  "tasks": [
+    {
+      "task_id": "GAIA_1",
+      "source": "GAIA Level 2",
+      "description": "Search the web to find the country whose capital city has the highest elevation above sea level among all G20 member nations. Then find the current population of that capital city. Finally, write and execute a Python script that: (1) prints the country name, capital city, elevation in meters, and population; (2) calculates how many times higher that capital is than the average elevation of a capital city worldwide (use 240m as the world average); (3) calculates the population density if the city area is 2,870 km².",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "reasoning_hops": 5,
+      "why_hard": "Requires knowing all G20 capitals, comparing elevations (non-trivial — Addis Ababa vs La Paz depends on G20 membership year), live population data, then multi-step arithmetic. Training data likely gives wrong G20 list or stale population.",
+      "completion_criterion": "Correct G20 capital identified (Quito/Bogota/Addis Ababa/Riyadh debate), live pop fetched, both calculations printed"
+    },
+    {
+      "task_id": "GAIA_2",
+      "source": "GAIA Level 2",
+      "description": "Find the most recent Nature or Science paper (published in 2025) that cites both 'CRISPR' and 'cancer immunotherapy' in its title or abstract. Extract: title, authors, journal, DOI, and publication date. Then write a Python script that: (1) prints all five fields; (2) computes how many days ago the paper was published from today's date (June 23 2026); (3) counts the number of words in the abstract.",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "reasoning_hops": 4,
+      "why_hard": "Requires navigating PubMed/Nature/Science search with specific 2025 filter and dual keyword constraint. Paper changes weekly — training data cannot answer. DOI extraction requires real web parsing.",
+      "completion_criterion": "Real 2025 paper found, DOI valid, days-ago and word count computed from live data"
+    },
+    {
+      "task_id": "GAIA_3",
+      "source": "GAIA Level 2",
+      "description": "Find the current market capitalisation of the three largest semiconductor companies by market cap (in USD). Then find the current price of a 1 kg bar of 99.99% pure gold in USD. Write and execute a Python script that: (1) prints each company's name and market cap; (2) calculates how many 1kg gold bars each company's market cap could buy; (3) calculates the total market cap of the three companies combined, in billions USD; (4) prints which company's market cap is closest to the GDP of South Korea (find South Korea's current nominal GDP too).",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "reasoning_hops": 6,
+      "why_hard": "Requires four independent live data lookups (3 market caps + gold price + S. Korea GDP), market cap rankings change weekly (NVIDIA/TSMC/Samsung/Broadcom/ASML all compete), all computations must use current live figures not training-data values.",
+      "completion_criterion": "All four live lookups verified, all calculations use fresh data, correct ranking at time of run"
+    },
+    {
+      "task_id": "GAIA_4",
+      "source": "GAIA Level 3",
+      "description": "This is a multi-hop research task. Step 1: Find the current UN Secretary-General and the year they took office. Step 2: Find who held that position 20 years before they took office (i.e. if they started in 2017, who was SG in 1997). Step 3: Find the birth country of that previous Secretary-General. Step 4: Find the current nominal GDP per capita of that birth country in USD. Step 5: Write and execute a Python script that prints all five pieces of information and calculates: (a) the ratio of that country's GDP per capita to the world average GDP per capita (use $13,100 as world average), and (b) how many years of that country's per-capita GDP it would take to equal $1 million USD.",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "reasoning_hops": 7,
+      "why_hard": "Classic GAIA multi-hop chain: current fact → 20yr-ago fact → biography → live economic data. Each hop can fail. Training data often has wrong start dates or stale GDP. 7 reasoning hops needed. Kofi Annan (Ghana) or Boutros Boutros-Ghali (Egypt) depending on current SG tenure.",
+      "completion_criterion": "Correct chain: Guterres (2017) → 1997 → Annan/Boutros-Ghali → Ghana or Egypt → live GDP per capita → both calculations printed"
+    },
+    {
+      "task_id": "GAIA_5",
+      "source": "GAIA Level 2",
+      "description": "Find the current #1 ranked tennis player (ATP singles, men's) and the current #1 ranked tennis player (WTA singles, women's). For each player: find their nationality, date of birth, and current career prize money earned in USD. Then write and execute a Python script that: (1) prints all information for both players; (2) calculates both players' ages in years and days as of today (June 23, 2026); (3) calculates the combined total career prize money; (4) determines which player has earned more prize money per day of their career (starting from their 18th birthday as proxy for pro start).",
+      "capabilities_required": ["web_browser", "python_coder"],
+      "capability_count": 2,
+      "reasoning_hops": 5,
+      "why_hard": "ATP/WTA rankings update every Monday — training data is guaranteed stale. Prize money figures require live ATP/WTA tour data. Age calculation must be exact to today's date (June 23 2026). Prize-money-per-day calculation requires multi-step date arithmetic with live figures.",
+      "completion_criterion": "Both current world #1s correctly identified, live prize money figures used, age exact to days, per-day earnings calculated correctly"
+    }
+  ]
+}

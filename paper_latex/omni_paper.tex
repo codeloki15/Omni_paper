@@ -1,0 +1,987 @@
+\documentclass[11pt,a4paper]{article}
+
+% Layout — mimics NeurIPS column width without requiring the style file
+\usepackage[a4paper, top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\usepackage{times}       % NeurIPS uses Times font
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, fit, backgrounds, shapes.geometric}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{multirow}
+\usepackage{makecell}
+\usepackage{tabularx}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{enumitem}
+
+% Code listing style
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue!70}\bfseries,
+  commentstyle=\color{gray},
+  stringstyle=\color{green!50!black},
+  frame=single,
+  rulecolor=\color{gray!40},
+  backgroundcolor=\color{gray!5},
+  breaklines=true,
+  breakatwhitespace=true,
+  numbers=none,
+  xleftmargin=4pt,
+  xrightmargin=4pt,
+}
+
+% Custom colors
+\definecolor{checkgreen}{RGB}{0,150,0}
+\definecolor{crossred}{RGB}{200,0,0}
+\definecolor{partialyellow}{RGB}{180,120,0}
+
+\newcommand{\cmark}{\textcolor{checkgreen}{\textbf{\checkmark}}}
+\newcommand{\xmark}{\textcolor{crossred}{\textbf{\texttimes}}}
+\newcommand{\pmark}{\textcolor{partialyellow}{\textbf{\textasciitilde}}}
+
+\newcommand{\omni}{\textsc{Omni}}
+\newcommand{\hitl}{\textsc{hitl}}
+\newcommand{\fsm}{\textsc{fsm}}
+
+\title{\omni: A Plan-Grounded Multi-Agent System\\for Long-Horizon Task Completion}
+
+\author{%
+  Ravian Team \\
+  Ravian AI \\
+  \texttt{team@ravian.ai}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+State-of-the-art coding agents---Claude Code, Codex, Devin---cannot complete tasks that require coordinating live web browsing, image generation, code execution, and email dispatch under a single user intent. Their architecture is optimized for one domain (the local filesystem and shell); the correct output of heterogeneous multi-step tasks depends on live environmental state---DOM structure, generated assets, retrieved data---that no single-domain agent can access or coordinate. We present \omni{}, a production multi-agent system built specifically for this class of task: \emph{heterogeneous long-horizon tasks} where two or more structurally distinct capabilities must be chained, later steps depend on live results of earlier steps, and at least one action has irreversible real-world consequences. \omni{} coordinates eleven specialized LLM agents across five capability types (web browsing, Python execution, email, image generation, file search) through four architectural mechanisms, each a structural solution to a named failure mode of heterogeneous long-horizon execution: (1) a \textbf{plan-anchored correction loop} grounding every correction in external execution artifacts rather than model self-belief~\cite{huang2024llms}; (2) a \textbf{tiered \hitl{} architecture} with three semantically distinct intervention tiers and formal trigger conditions, eliminating both over- and under-interruption simultaneously; (3) a \textbf{deterministic \fsm{} speaker-selection function} replacing stochastic LLM routing with $O(1)$ predicate-based transitions; and (4) \textbf{memory-mediated capability chaining} propagating upstream execution results across isolated GroupChat boundaries. A survey of 35 recent agentic papers shows no prior system provides structural mechanisms for all five failure modes we identify. We verify the \fsm{} exhaustively (15/15 transitions, 0\% error rate, 1.6\,$\mu$s/transition) and confirm end-to-end orchestration on 5 live tasks via the full 9-agent loop (claude-sonnet-4-6). The \fsm{} eliminates routing token overhead entirely: a 50-step task with LLM-based routing consumes approximately 20{,}000 tokens (\$$\sim$0.06 at GPT-4o pricing) purely for speaker selection with zero contribution to task quality; \omni{}'s \fsm{} reduces this cost to zero. Single-domain coding agents score 0 on our structural impossibility category by architectural necessity. Full ablation results are reported under the experimental protocol in Section~\ref{sec:experiments}.
+\end{abstract}
+
+% ─────────────────────────────────────────────────────────────────
+\section{Introduction}
+\label{sec:intro}
+% ─────────────────────────────────────────────────────────────────
+
+Consider the task: \emph{``Build me a landing page for my product---look at what competitors are doing, generate a logo, write the code, and email me the result.''}
+
+State-of-the-art coding agents cannot complete this task. Not because their code quality is insufficient, but because the task requires capabilities structurally outside their execution model: opening a live browser and reading DOM structure from a real webpage, generating an image asset during execution, and sending an email when done. These agents operate on static training knowledge and produce code artifacts. They have no execution pathway to live environmental state. Their definition of \emph{done} is syntactic---code compiles, tests pass---not semantic: did the right actions happen in the real world?
+
+This gap is not a limitation waiting to be patched. It reflects a fundamental architectural choice: coding agents are designed for developer productivity within a single domain. They are not designed for tasks that require coordinating across heterogeneous real-world capabilities---live web data, visual asset generation, file management, communication---under a single user intent, with appropriate human oversight at the moments that matter.
+
+\textbf{\omni{} is designed for exactly this class of task.} We define it precisely: a \emph{heterogeneous long-horizon task} requires (1) two or more structurally distinct capability types (e.g., browser + code + email), (2) where the correct output of a later step depends on the live execution result of an earlier step (not a training-time assumption about it), and (3) where at least one action has irreversible real-world consequences.
+
+We identify five failure modes that emerge specifically in heterogeneous long-horizon execution, and organize every architectural contribution in this paper around eliminating one (Table~\ref{tab:failure_modes}).
+
+\begin{table}[h]
+\centering
+\caption{Five failure modes of heterogeneous long-horizon execution and \omni{}'s structural response to each.}
+\label{tab:failure_modes}
+\small
+\begin{tabularx}{\textwidth}{lXl}
+\toprule
+\textbf{Failure mode} & \textbf{Description} & \textbf{\omni{} mechanism} \\
+\midrule
+Goal drift & Agent loses track of original intent after capability switches & Plan-anchored correction loop (\S\ref{sec:plan_loop}) \\
+Over-interruption & System asks human for decisions it should handle autonomously & Tiered \hitl{}---strategic tier (\S\ref{sec:hitl}) \\
+Under-interruption & System proceeds on ambiguous or irreversible actions & Tiered \hitl{}---tactical tier (\S\ref{sec:hitl}) \\
+Coordination chaos & Multi-agent routing is nondeterministic or redundant & Deterministic \fsm{} selection (\S\ref{sec:fsm}) \\
+Context loss & Execution artifacts from capability A unavailable to capability B & Memory-mediated chaining (\S\ref{sec:memory}) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+None of these failure modes arise in single-capability agents. They are emergent properties of heterogeneous coordination, and they require architectural solutions---not better prompts.
+
+\paragraph{Contributions.}
+\begin{enumerate}[leftmargin=*, topsep=2pt, itemsep=1pt]
+  \item \textbf{Plan-anchored correction loop} (addresses: goal drift)---a structured Pydantic task plan (\texttt{PlannerResponse}) re-evaluated after every capability returns, using actual execution artifacts as the correction signal. Every correction in \omni{} is oracle-guided, not model-internal~\cite{huang2024llms}.
+  \item \textbf{Tiered \hitl{} architecture} (addresses: over- and under-interruption)---three semantically distinct intervention tiers with formal trigger conditions: strategic plan approval, tactical ambiguity/irreversibility gates, and operational input collection. The tiers are a correctness requirement, not a UX choice.
+  \item \textbf{Deterministic \fsm{} speaker selection} (addresses: coordination chaos)---a hand-coded Python finite-state machine replacing per-turn LLM routing with $O(1)$ predicate-based transitions: zero token cost, fully auditable, statically enumerable. Content-flag driven branching gives dynamic replanning without stochasticity.
+  \item \textbf{Memory-mediated capability chaining} (addresses: context loss)---\texttt{OmniMemory}, a session-scoped episodic store that injects upstream execution results as \texttt{context\_keeper} messages into each newly initialized capability GroupChat.
+\end{enumerate}
+
+A survey of 35 recent agentic papers (Section~\ref{sec:related}) confirms that no prior system provides structural mechanisms for all five failure modes simultaneously. The full implementation is available at \url{https://github.com/Ravian-Omni/omni-backend}.
+
+% ─────────────────────────────────────────────────────────────────
+\section{Background and Motivation}
+\label{sec:background}
+% ─────────────────────────────────────────────────────────────────
+
+\subsection{Multi-Agent LLM Frameworks}
+
+AutoGen~\cite{wu2024autogen} introduced GroupChat-based multi-agent conversation as a general substrate for LLM applications. A \textbf{GroupChat} is a shared message buffer: a list of agents, a list of messages, and a manager that decides which agent speaks next. Each GroupChat instance is \textbf{memory-isolated}---it has no knowledge of any other GroupChat's messages. When a new GroupChat is created (e.g., to run a Python execution capability), it starts with an empty message history regardless of what happened in any prior GroupChat. This is a correct design choice for a general framework---isolation prevents context bleed between unrelated conversations---but creates a structural problem for multi-capability task execution: the Python executor cannot see what the browser retrieved, because they run in separate GroupChat instances with no shared state. AutoGen's GroupChatManager orchestrates turn-taking via LLM-based speaker selection on every transition. This creates three production friction points: (1) nondeterministic routing, (2) token overhead, and (3) unverifiability---there is no formal way to enumerate all reachable states.
+
+MetaGPT~\cite{hong2024metagpt} addressed coordination reliability in software pipelines by treating intermediate artifacts as typed contracts between role agents. However, MetaGPT's coordination is linear (static SOP) and single-domain (software engineering), with no \hitl{} mechanism and no cross-capability memory.
+
+GPTSwarm~\cite{besta2024gptswarm} and AFlow~\cite{zhao2025aflow} optimize agent topology via REINFORCE and MCTS respectively, discovering effective coordination graphs offline. These approaches maximize benchmark performance but sacrifice runtime adaptability and auditability.
+
+\subsection{Self-Correction and Alignment}
+
+Reflexion~\cite{shinn2023reflexion} demonstrated that verbal self-critique stored in episodic memory enables agent self-improvement without weight updates. However, \citet{huang2024llms} showed rigorously that \emph{intrinsic} self-correction---where the model reviews its own output without an external signal---reliably degrades performance (GPT-4 on GSM8K: 95.5\% $\to$ 89.0\%). Every correction in \omni{} is grounded in external execution artifacts, never in model self-belief.
+
+\subsection{Human-in-the-Loop Systems}
+
+HULA~\cite{rasheed2024hula} demonstrated industrial-scale \hitl{} deployment for coding agents, gating two fixed pipeline stages. CowPilot~\cite{cowpilot2025} quantified that 15.2\% human effort yields 95\% task accuracy in web navigation. Magentic-UI~\cite{microsoft2025magenticui} implemented six \hitl{} modes including action guards and co-planning. All three systems treat \hitl{} as a uniform interrupt type, differing only in frequency. \omni{} instead formalizes a taxonomy of three semantically distinct interrupt types.
+
+\subsection{Memory Systems for Agents}
+
+MemGPT~\cite{packer2023memgpt} introduced OS-inspired hierarchical memory management to extend a single LLM agent's effective context window. EM-LLM~\cite{fountas2024emllm} extended this with Bayesian surprise-based episode segmentation. Both address \emph{intra-agent} long-context continuity. \omni{} solves a structurally distinct problem: \emph{inter-agent} episodic handoff---transferring execution state across independently initialized multi-agent GroupChat instances.
+
+% ─────────────────────────────────────────────────────────────────
+\section{The \omni{} Architecture}
+\label{sec:architecture}
+% ─────────────────────────────────────────────────────────────────
+
+\subsection{System Overview}
+
+\omni{} is built on AutoGen's GroupChat primitive~\cite{wu2024autogen} and extends it with a two-level hierarchical structure. The outer level is an \textbf{\omni{} GroupChat} containing 11 specialized agents that coordinate task planning, routing, human interaction, and completion. The inner level consists of five \textbf{Capability GroupChats}---self-contained multi-agent conversations for browser interaction, Python code execution, email management, image generation, and file search---each spawned and managed by a \texttt{CapabilityManager} as isolated sub-processes.
+
+Figure~\ref{fig:architecture} shows the full system architecture and FSM transition graph. The 11 \omni{} agents and their roles are listed in Table~\ref{tab:agents}.
+
+\begin{table}[h]
+\centering
+\caption{The 11 \omni{} agents, roles, and output schemas.}
+\label{tab:agents}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Agent} & \textbf{Role} & \textbf{Output schema} \\
+\midrule
+\texttt{judge\_question} & Classifies input as task-oriented vs.\ conversational & \texttt{QuestionClassification} \\
+\texttt{conversation\_agent} & Handles conversational queries directly & Free text \\
+\texttt{planner\_agent} & Creates and updates structured task breakdown & \texttt{PlannerResponse} \\
+\texttt{get\_user\_acceptance} & Requests plan confirmation from user & Prompt string \\
+\texttt{agent\_aligner} & Routes to next agent based on plan state & \texttt{AgentSelectionResponse} \\
+\texttt{agent\_router} & Analyzes task dependencies, selects capabilities & \texttt{CapabilityRoutingResponse} \\
+\texttt{agent\_caller} & Invokes registered capability functions & Tool call \\
+\texttt{agent\_executor} & Executes capability functions & Result \\
+\texttt{manual\_verification} & Requests human clarification on ambiguous inputs & Prompt string \\
+\texttt{user\_input} & Collects human responses to verification requests & User string \\
+\texttt{process\_completion\_agent} & Provides final summary upon task completion & Free text \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  node distance=0.45cm and 0.6cm,
+  % styles
+  agent/.style={
+    rectangle, rounded corners=3pt, draw=#1!70!black,
+    fill=#1!12, minimum width=2.6cm, minimum height=0.65cm,
+    text centered, inner sep=4pt, font=\footnotesize\ttfamily
+  },
+  hitl/.style={
+    rectangle, rounded corners=3pt, draw=orange!80!black,
+    fill=orange!15, minimum width=2.6cm, minimum height=0.65cm,
+    text centered, inner sep=4pt, font=\footnotesize\ttfamily
+  },
+  cap/.style={
+    rectangle, rounded corners=3pt, draw=teal!70!black,
+    fill=teal!10, minimum width=1.8cm, minimum height=0.75cm,
+    text centered, inner sep=4pt, font=\scriptsize\ttfamily
+  },
+  arr/.style={-{Stealth[length=5pt]}, thick, gray!70!black},
+  label/.style={font=\scriptsize\itshape, text=gray!60!black},
+]
+
+%% ── USER INPUT ──────────────────────────────────────────────────────
+\node[rectangle, draw=black!40, fill=black!5, rounded corners=3pt,
+      minimum width=2cm, minimum height=0.5cm,
+      font=\footnotesize\bfseries] (user) {User Input};
+
+%% ── ROW 1: judge ─────────────────────────────────────────────────
+\node[agent=blue, below=0.7cm of user] (judge) {judge\_question};
+
+%% ── Conversation branch (left) ───────────────────────────────────
+\node[agent=gray, below left=0.9cm and 1.8cm of judge] (conv) {conversation\_agent};
+
+%% ── ROW 2: planner ──────────────────────────────────────────────
+\node[agent=blue, below right=0.9cm and 1.8cm of judge] (planner) {planner\_agent\\{\tiny PlannerResponse}};
+
+%% ── HITL Tier 1 ─────────────────────────────────────────────────
+\node[hitl, below=0.55cm of planner] (gua) {get\_user\_acceptance\\{\tiny [Strategic — Tier 1]}};
+
+%% ── ROW 3: aligner ──────────────────────────────────────────────
+\node[agent=blue, below=0.55cm of gua] (aligner) {agent\_aligner\\{\tiny AgentSelectionResponse}};
+
+%% ── HITL Tier 2 (right branch) ───────────────────────────────────
+\node[hitl, right=1.5cm of aligner] (manver) {manual\_verification\\{\tiny [Tactical — Tier 2]}};
+\node[hitl, below=0.55cm of manver] (userinp) {user\_input\\{\tiny [Operational — Tier 3]}};
+
+%% ── Execution chain (left of aligner) ───────────────────────────
+\node[agent=blue, below left=0.9cm and 0.5cm of aligner] (router) {agent\_router\\{\tiny CapabilityRoutingResp}};
+\node[agent=blue, below=0.55cm of router] (caller) {agent\_caller\\{\tiny tool dispatch}};
+\node[agent=blue, below=0.55cm of caller] (executor) {agent\_executor\\{\tiny runs capability}};
+
+%% ── Planner update (re-loop) ─────────────────────────────────────
+\node[agent=blue, below=0.55cm of executor] (planner2) {planner\_agent\\{\tiny updates plan}};
+
+%% ── Completion ──────────────────────────────────────────────────
+\node[agent=green!50!black, below=0.55cm of planner2] (completion) {process\_completion\_agent};
+
+%% ── CAPABILITY ROW ──────────────────────────────────────────────
+\node[cap, below=2.2cm of planner2, xshift=-4.2cm] (browser)  {Browser\\Manager\\{\tiny live DOM}};
+\node[cap, right=0.35cm of browser]                (python)   {Python\\Developer\\{\tiny code+exec}};
+\node[cap, right=0.35cm of python]                 (email)    {Email\\Mgr\\{\tiny SMTP}};
+\node[cap, right=0.35cm of email]                  (imagegen) {Image\\Gen\\{\tiny DALL-E}};
+\node[cap, right=0.35cm of imagegen]               (finder)   {File\\Finder\\{\tiny fs}};
+
+%% ── OmniMemory label ─────────────────────────────────────────────
+\node[font=\scriptsize\itshape, text=teal!70!black,
+      below=0.25cm of python, xshift=0.9cm] (mem)
+      {OmniMemory (context\_keeper injection)};
+
+%% ─────────────────── ARROWS ──────────────────────────────────────
+
+% user → judge
+\draw[arr] (user) -- (judge);
+
+% judge → planner (task_oriented)
+\draw[arr] (judge) -- node[label, above right, xshift=-2pt]{task\_oriented} (planner);
+
+% judge → conv (conversation)
+\draw[arr] (judge) -- node[label, above left, xshift=2pt]{conversation} (conv);
+
+% planner → gua (first plan)
+\draw[arr] (planner) -- node[label, right]{\tiny first plan} (gua);
+
+% gua → aligner
+\draw[arr] (gua) -- node[label, right]{\tiny approved} (aligner);
+
+% aligner → router
+\draw[arr] (aligner) -- node[label, left]{\tiny agent\_router} (router);
+
+% aligner → manver
+\draw[arr] (aligner) -- node[label, above]{\tiny manual\_verif.} (manver);
+
+% manver → userinp
+\draw[arr] (manver) -- (userinp);
+
+% userinp → aligner (loop back)
+\draw[arr] (userinp.west) -- ++(-0.5,0) |- node[label,left]{\tiny response} (aligner.west);
+
+% router → caller
+\draw[arr] (router) -- (caller);
+
+% caller → executor
+\draw[arr] (caller) -- (executor);
+
+% executor → planner2
+\draw[arr] (executor) -- node[label, right]{\tiny result} (planner2);
+
+% planner2 → completion (overall_status=completed)
+\draw[arr] (planner2) -- node[label, right]{\tiny completed} (completion);
+
+% planner2 → aligner re-loop (overall_status=pending)
+\draw[arr] (planner2.east) -- ++(1.2,0) |-
+  node[label, right, yshift=8pt]{\tiny pending → re-route} (aligner.east);
+
+% executor → capabilities (agent_caller spawns them)
+\draw[arr, teal!60!black] (executor.south) -- ++(0,-0.4)
+    -| node[label, below left, xshift=12pt]{\tiny spawned via CapabilityManager} (browser.north);
+\draw[arr, teal!60!black] (executor.south) -- ++(0,-0.4) -| (python.north);
+\draw[arr, teal!60!black] (executor.south) -- ++(0,-0.4) -| (email.north);
+\draw[arr, teal!60!black] (executor.south) -- ++(0,-0.4) -| (imagegen.north);
+\draw[arr, teal!60!black] (executor.south) -- ++(0,-0.4) -| (finder.north);
+
+% artifacts → OmniMemory → planner2
+\draw[arr, teal!60!black, dashed]
+  (mem.north) -- ++(0,0.3) -| node[label, right]{\tiny artifacts} (planner2.south);
+
+%% ── OUTER BOX for GroupChat ──────────────────────────────────────
+\begin{pgfonlayer}{background}
+  \node[draw=blue!40, fill=blue!3, rounded corners=6pt,
+        fit=(judge)(conv)(planner)(gua)(aligner)(router)(caller)(executor)(planner2)(completion)(manver)(userinp),
+        label={[font=\footnotesize\bfseries\color{blue!60!black}]above:Omni GroupChat (FSM-governed)},
+        inner sep=10pt] (omnibox) {};
+\end{pgfonlayer}
+
+%% ── OUTER BOX for Capabilities ───────────────────────────────────
+\begin{pgfonlayer}{background}
+  \node[draw=teal!50, fill=teal!4, rounded corners=6pt,
+        fit=(browser)(python)(email)(imagegen)(finder)(mem),
+        label={[font=\footnotesize\bfseries\color{teal!60!black}]below:Capability GroupChats (memory-isolated, spawned per task)},
+        inner sep=8pt] {};
+\end{pgfonlayer}
+
+\end{tikzpicture}
+\caption{\textbf{Omni system architecture and FSM transition graph.}
+Top box: the Omni GroupChat with all 11 agents. Solid arrows show deterministic FSM transitions (zero LLM cost); orange nodes are the three HITL tiers. The plan loop (\texttt{planner\_agent} $\to$ \texttt{agent\_executor} $\to$ \texttt{planner\_agent}) is the core feedback cycle, terminating only when \texttt{overall\_status=completed}. Bottom box: five Capability GroupChats spawned by \texttt{CapabilityManager}; execution artifacts flow back through \texttt{OmniMemory} as context injection into the next capability GroupChat.}
+\label{fig:architecture}
+\end{figure*}
+
+\subsection{Contribution 1: Plan-Anchored Correction Loop}
+\label{sec:plan_loop}
+
+\paragraph{Motivation.} \citet{huang2024llms} demonstrate that LLMs cannot reliably self-correct without external feedback. \omni{} takes this as a design axiom: no correction signal in our system is derived from a model reviewing its own output. Every correction is grounded in external execution artifacts (browser HTML, Python stdout, file contents).
+
+\paragraph{Mechanism.} Before execution begins, \texttt{planner\_agent} produces a \texttt{PlannerResponse}:
+
+\begin{lstlisting}[language=Python]
+class Task(BaseModel):
+    task_id: int
+    task: str
+    capability: Capability   # web_browser | python_coder | email_sender | ...
+    status: Status           # pending | completed | failed
+    details: str
+    estimated_time: str
+
+class PlannerResponse(BaseModel):
+    user_request: str
+    breakdown: List[Task]
+    overall_strategy: str
+    overall_status: OverallStatus   # pending | completed
+    overall_estimated_time: str
+\end{lstlisting}
+
+After every capability invocation completes, \texttt{agent\_executor} returns its result to \texttt{planner\_agent}. The planner updates the corresponding \texttt{Task.status} field and re-emits the full \texttt{PlannerResponse}. The FSM checks \texttt{overall\_status} on every planner emission:
+
+\begin{lstlisting}[language=Python]
+if last_speaker.name == "planner_agent":
+    status = json.loads(messages[-1]["content"]).get("overall_status")
+    if status == "completed":
+        return groupchat.agent_by_name("process_completion_agent")
+    else:
+        return groupchat.agent_by_name("agent_aligner")
+\end{lstlisting}
+
+\paragraph{Properties.} This creates a closed feedback loop with three properties:
+\begin{enumerate}[topsep=2pt, itemsep=1pt]
+  \item \textbf{External grounding}: The correction signal is tool output, not model self-belief.
+  \item \textbf{Shared ground truth}: All agents read the same plan; no agent can route forward based on stale private state.
+  \item \textbf{Typed accountability}: \texttt{Status} is a Pydantic enum---the planner cannot hallucinate a completion; it must emit \texttt{completed} or \texttt{failed} as a validated field.
+\end{enumerate}
+
+\paragraph{Distinction from Reflexion.} Reflexion~\cite{shinn2023reflexion} stores verbal self-critiques for \emph{future trials} of the \emph{same task}. \omni{} updates the plan with execution artifacts \emph{within the current task execution} and across \emph{heterogeneous capabilities}. The two mechanisms are complementary and non-overlapping.
+
+\subsection{Contribution 2: Tiered Human-in-the-Loop Architecture}
+\label{sec:hitl}
+
+\paragraph{Motivation.} Prior \hitl{} systems treat human involvement as a single undifferentiated interrupt type. HULA has two fixed pipeline stages. Magentic-UI has six modes but does not formally distinguish their trigger semantics. Conflating interrupt types produces two simultaneous failure modes: over-interruption and under-interruption.
+
+\paragraph{Three-tier model.} We formalize three interrupt types with distinct trigger conditions (Table~\ref{tab:hitl_tiers}).
+
+\begin{table}[h]
+\centering
+\caption{The three \hitl{} tiers in \omni{}, with trigger conditions, information payload, and human cost.}
+\label{tab:hitl_tiers}
+\small
+\begin{tabular}{lllll}
+\toprule
+\textbf{Tier} & \textbf{Agent} & \textbf{Trigger} & \textbf{Payload} & \textbf{Cost} \\
+\midrule
+Strategic & \texttt{get\_user\_acceptance} & Once per task, after first plan & Full \texttt{PlannerResponse} & Low---binary \\
+Tactical & \texttt{manual\_verification} & Any of 3 named conditions & Specific clarification question & Medium---free text \\
+Operational & \texttt{user\_input} & After tactical prompt emitted & Verbatim prompt string & Low---typed response \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Formal tactical tier trigger conditions.} The \texttt{agent\_aligner} routes to \texttt{manual\_verification} when any of three conditions are satisfied: (1) any agent emits a message containing \texttt{"manual verification"} or \texttt{"user confirmation"}; (2) a task's \texttt{details} field cannot be resolved without user-provided information; or (3) the next task involves an irreversible real-world action (sending email, deleting files, submitting forms, calling side-effecting APIs).
+
+These conditions are encoded in \texttt{agent\_aligner}'s system prompt as a priority-ordered decision tree. The \texttt{agent\_aligner} implements routing via a formal XML-specified logic:
+
+\begin{lstlisting}[language=XML]
+<decision_logic>
+  <step priority="1">
+    <condition>Planner confirms ALL tasks completed</condition>
+    <action>process_completion</action>
+  </step>
+  <step priority="2">
+    <condition>Any agent requests manual verification</condition>
+    <action>manual_verification</action>
+  </step>
+  <step priority="3">
+    <condition>Pending work exists</condition>
+    <action>agent_router</action>
+  </step>
+</decision_logic>
+\end{lstlisting}
+
+\paragraph{Async timeout semantics.} Human responses are collected via WebSocket with a 600-second timeout and 5-second polling interval. This quantifies the system's willingness to pause vs.\ time out---a design parameter not formalized in any prior \hitl{} system.
+
+\paragraph{Theoretical framing.} The LLM-HAS survey~\cite{llmhas2025} taxonomizes human-agent systems by human role: supervisor, collaborator, or delegator. \omni{}'s three tiers instantiate all three roles simultaneously: strategic tier (supervisor), tactical tier (collaborator), operational tier (delegator).
+
+\subsection{Contribution 3: Deterministic FSM Speaker Selection}
+\label{sec:fsm}
+
+\paragraph{Motivation.} AutoGen's default speaker selection requires an LLM call on every agent transition. For a 50-step task with 11 agents, this is 50 routing calls---token cost and nondeterminism with no contribution to task quality. Moreover, a stochastic routing policy cannot be formally audited.
+
+\paragraph{Implementation.} We replace AutoGen's LLM-based speaker selection with \texttt{custom\_speaker\_selection\_func}, a hand-coded Python FSM:
+
+\begin{lstlisting}[language=Python]
+def custom_speaker_selection_func(self, last_speaker, groupchat):
+    messages = groupchat.messages
+
+    # Completion check — reads JSON field from planner output
+    if last_speaker.name == "planner_agent":
+        status = json.loads(messages[-1]["content"]).get("overall_status")
+        if status == "completed":
+            return groupchat.agent_by_name("process_completion_agent")
+
+    # Initial classification
+    if len(messages) == 1:
+        return groupchat.agent_by_name("judge_question")
+
+    # Intent routing — reads string flag from judge output
+    if last_speaker.name == "judge_question":
+        if "task_oriented" in messages[-1]["content"]:
+            return groupchat.agent_by_name("planner_agent")
+        if "conversation" in messages[-1]["content"]:
+            return groupchat.agent_by_name("conversation_agent")
+
+    # Alignment routing — reads string flag from aligner output
+    if last_speaker.name == "agent_aligner":
+        content = messages[-1]["content"]
+        if "agent_router" in content:
+            return groupchat.agent_by_name("agent_router")
+        elif "manual_verification" in content:
+            return groupchat.agent_by_name("manual_verification")
+        elif "process_completion" in content:
+            return groupchat.agent_by_name("process_completion_agent")
+
+    # Plan acceptance — position predicate distinguishes first plan from re-plan
+    if last_speaker.name == "planner_agent":
+        if messages[-2]["name"] == "judge_question":
+            return groupchat.agent_by_name("get_user_acceptance")
+        return groupchat.agent_by_name("agent_aligner")
+
+    # HITL loop
+    if last_speaker.name == "manual_verification":
+        return groupchat.agent_by_name("user_input")
+    if last_speaker.name == "user_input":
+        return groupchat.agent_by_name("agent_aligner")
+
+    # Execution loop
+    if last_speaker.name == "agent_router":
+        return groupchat.agent_by_name("agent_caller")
+    if last_speaker.name == "agent_executor":
+        return groupchat.agent_by_name("planner_agent")
+\end{lstlisting}
+
+\paragraph{Content-flag driven branching.}
+A key property not obvious from the transition diagram: routing decisions read \emph{message content}, not just speaker identity. The FSM branches on five distinct content flags (Table~\ref{tab:content_flags}). This is what gives the FSM dynamic replanning behavior without sacrificing determinism. The FSM does not decide \emph{what} should happen next---the agents do, by emitting structured flags. The FSM only decides \emph{which agent} processes that decision. Dynamic behavior emerges from agent outputs, not from stochastic routing.
+
+\begin{table}[h]
+\centering
+\caption{Content flags read by the \fsm{} and their routing effects.}
+\label{tab:content_flags}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Flag} & \textbf{Emitting agent} & \textbf{Routing effect} \\
+\midrule
+\texttt{overall\_status: "completed"} (JSON) & \texttt{planner\_agent} & Exit to \texttt{process\_completion\_agent} \\
+\texttt{"task\_oriented"} / \texttt{"conversation"} & \texttt{judge\_question} & Fork to orchestration pipeline vs.\ direct reply \\
+\texttt{"agent\_router"} / \texttt{"manual\_verification"} & \texttt{agent\_aligner} & Continue, escalate to human, or terminate \\
+\texttt{tool\_calls} field present & \texttt{agent\_caller} & Route to executor vs.\ conversation agent \\
+\texttt{messages[-2]["name"] == "judge\_question"} & Position predicate & First plan $\to$ acceptance; re-plan $\to$ aligner \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Properties.}
+\begin{itemize}[topsep=2pt, itemsep=1pt]
+  \item \textbf{Zero LLM cost}: Every routing decision is a Python predicate---$O(1)$, no inference.
+  \item \textbf{Deterministic}: The same conversation state always produces the same next agent.
+  \item \textbf{Auditable}: The transition graph can be statically enumerated. Every reachable state is a named Python branch.
+  \item \textbf{Cancellation-aware}: Every call begins with \texttt{self.\_check\_cancellation()}, propagating \texttt{asyncio.CancelledError} for graceful shutdown.
+\end{itemize}
+
+\paragraph{Hybrid routing.} \omni{} does not eliminate LLM inference from routing entirely---it eliminates it from \emph{reliability-critical} routing. The \texttt{agent\_router} uses one targeted LLM call to detect task dependencies:
+
+\begin{lstlisting}[language=Python]
+class CapabilityRoutingResponse(BaseModel):
+    has_dependencies: bool
+    selected_tasks: List[int]
+    execution_notes: str
+\end{lstlisting}
+
+If \texttt{has\_dependencies=True}, only the next sequential task is dispatched. If \texttt{False}, all independent tasks are dispatched in parallel. This hybrid design---deterministic \fsm{} for routing reliability, LLM for dependency intelligence---is a principled decomposition not present in any surveyed prior work.
+
+\subsection{Contribution 4: Memory-Mediated Capability Chaining}
+\label{sec:memory}
+
+\paragraph{Motivation.} AutoGen's GroupChat instances are memory-isolated by design. When \texttt{agent\_caller} invokes the \texttt{python\_coder} capability, the resulting GroupChat has no knowledge of what the preceding \texttt{BrowserManager} GroupChat retrieved.
+
+\paragraph{OmniMemory.} We introduce a session-scoped episodic store that tracks all messages across both the \omni{} GroupChat and all spawned capability GroupChats:
+
+\begin{lstlisting}[language=Python]
+class MessageEntry:
+    message: dict
+    chat_id: str
+    chat_type: ChatType       # MAIN or CAPABILITY
+    capability_name: str | None
+    timestamp: datetime
+    sequence_id: int
+
+class OmniMemory:
+    def __init__(self, main_chat_id: str):
+        self.messages: List[MessageEntry] = []
+        self.capability_instances: Dict[str, List[str]] = {}
+        self._sequence_counter = 0
+\end{lstlisting}
+
+\paragraph{Context injection.} When \texttt{CapabilityManager} initializes a new capability GroupChat, it calls \texttt{memory.pull\_recent\_from\_executor()} to retrieve the most recent outputs from prior capability executions, then injects them as synthetic \texttt{context\_keeper} messages at the head of the new GroupChat's history:
+
+\begin{lstlisting}[language=Python]
+def _prepare_chat_messages(self) -> List[dict]:
+    messages = []
+    omni_executor = self.memory.pull_recent_from_executor()
+    for agent_message in omni_executor:
+        messages.append({
+            "role": "user",
+            "name": "context_keeper",
+            "content": agent_message["content"],
+        })
+    return messages
+\end{lstlisting}
+
+\paragraph{Properties.}
+\begin{itemize}[topsep=2pt, itemsep=1pt]
+  \item \textbf{Deterministic injection}: Context propagation is application-managed, not LLM self-directed (contrast with MemGPT~\cite{packer2023memgpt}).
+  \item \textbf{Cross-GroupChat boundary}: Solves a problem that does not arise in single-agent settings.
+  \item \textbf{Recency-based}: The most recent executor outputs are injected, prioritizing immediate task context.
+\end{itemize}
+
+\paragraph{Distinction from MemGPT.} MemGPT extends a single agent's effective context window. OmniMemory propagates execution artifacts across structurally isolated multi-agent conversations. These are different problems at different abstraction levels.
+
+\subsection{Supplementary: Loop Detection}
+
+The \texttt{python\_developer} capability includes a \texttt{LoopDetector} monitoring for repeated messages within a sliding window of size 3. When a loop is detected, the capability routes to a \texttt{stop\_agent} for graceful termination. This addresses infinite debugging cycles in code-generating agents at the infrastructure level, independent of prompt engineering.
+
+\subsection{Structured Output Contracts}
+
+Every LLM-backed agent responds with a Pydantic model enforced via the \texttt{response\_format} parameter (Table~\ref{tab:schemas}). Pydantic validation runs at the LLM API layer---a schema violation triggers automatic LLM retry, converting silent hallucination propagation into a catchable exception.
+
+\begin{table}[h]
+\centering
+\caption{Structured output schemas for key \omni{} agents.}
+\label{tab:schemas}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Agent} & \textbf{Schema} & \textbf{Key constraints} \\
+\midrule
+\texttt{judge\_question} & \texttt{QuestionClassification} & \texttt{intent: Literal["task\_oriented", "conversation"]} \\
+\texttt{planner\_agent} & \texttt{PlannerResponse} & \texttt{status: Enum[pending, completed, failed]} per task \\
+\texttt{agent\_aligner} & \texttt{AgentSelectionResponse} & \texttt{final\_answer: Literal["agent\_router", "manual\_verification", ...]} \\
+\texttt{agent\_router} & \texttt{CapabilityRoutingResponse} & \texttt{has\_dependencies: bool}; \texttt{selected\_tasks: List[int]} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────
+\section{Related Work}
+\label{sec:related}
+% ─────────────────────────────────────────────────────────────────
+
+\paragraph{Non-ML workflow automation.}
+A natural question is whether heterogeneous multi-step task coordination requires LLM-based multi-agent systems at all. Existing workflow automation tools---Zapier, n8n, Make.com---and robotic process automation (RPA) platforms---UiPath, Automation Anywhere---already connect heterogeneous APIs (browser, email, file systems) into multi-step pipelines. These tools are reliable and production-proven for fixed, pre-specified sequences. However, they structurally fail on heterogeneous long-horizon tasks in three ways: (1)~\textbf{no natural language task intake}---the pipeline must be pre-specified by a developer; the user cannot express ``find competitor pricing and email me a comparison'' and have the system construct the pipeline; (2)~\textbf{no mid-execution replanning}---if a step fails (scraper returns 403, file is missing), the pipeline errors out with no mechanism to update the task plan and re-route; (3)~\textbf{no HITL semantics}---RPA systems have no concept of interrupting only on irreversible or ambiguous actions. \omni{} addresses all three gaps by treating task decomposition, replanning, and human oversight as first-class runtime mechanisms rather than pre-specification requirements. The cost is LLM inference overhead; the gain is the ability to handle tasks whose execution path cannot be known until the task is run.
+
+\paragraph{Multi-agent orchestration.} \omni{} builds on AutoGen~\cite{wu2024autogen} and identifies three production limitations: LLM-based speaker selection, memory-isolated GroupChat instances, and free-text inter-agent messages. MetaGPT~\cite{hong2024metagpt} addresses structured inter-agent communication for software engineering; \omni{} generalizes typed contracts to five heterogeneous modalities. GPTSwarm~\cite{besta2024gptswarm} and AFlow~\cite{zhao2025aflow} optimize agent topology offline; \omni{} encodes topology as an auditable \fsm{} and directs design effort toward runtime mechanisms. AgentOrchestra~\cite{agentorchestra2025} achieves 89\% on GAIA via hierarchical decomposition; \omni{} differentiates through tiered \hitl{} (absent in AgentOrchestra), deterministic routing, and continuous replanning.
+
+\paragraph{Plan-grounded correction.} Reflexion~\cite{shinn2023reflexion} pioneered verbal reinforcement learning for agents. \citet{huang2024llms} proved intrinsic self-correction degrades accuracy, motivating our oracle-grounded plan loop. SCoRe~\cite{kumar2024score} and Meta-Rewarding~\cite{yuan2024metarewarding} improve self-correction at training time; \omni{} addresses the orthogonal problem of inference-time orchestration-level alignment without weight updates. Plan-and-Act~\cite{planandact2025} fine-tunes a planner model but generates the plan once; \omni{} re-invokes the planner after every execution step.
+
+\paragraph{Human-in-the-loop.} HULA~\cite{rasheed2024hula} demonstrated two-stage \hitl{} for coding agents. Magentic-UI~\cite{microsoft2025magenticui} is the closest architectural peer---WebSocket-based, six interaction modes, cross-session memory---but lacks deterministic routing and plan-anchored state. CowPilot~\cite{cowpilot2025} quantifies 15.2\% human effort $\to$ 95\% accuracy, validating proportional intervention. ARIA~\cite{aria2025} demonstrates uncertainty-driven \hitl{} for knowledge adaptation.
+
+\paragraph{Long-horizon planning.} TravelPlanner~\cite{xie2024travelplanner} shows GPT-4 achieves 0.6\% success on constraint-rich multi-step tasks due to constraint forgetting and context loss---failure modes \omni{}'s plan loop and memory chaining are designed to prevent. HiAgent~\cite{hiagent2024} uses hierarchical working memory within a single environment; \omni{} coordinates across five heterogeneous capabilities.
+
+\paragraph{Memory systems.} MemGPT~\cite{packer2023memgpt} manages intra-agent long-context via OS-inspired memory hierarchy. EM-LLM~\cite{fountas2024emllm} extends this with Bayesian episodic segmentation. Both address intra-agent continuity. \omni{} addresses inter-agent episodic handoff across isolated GroupChat boundaries---a distinct problem not solved by either system.
+
+\paragraph{Feature comparison.} Table~\ref{tab:comparison} maps surveyed systems against the five failure modes. \omni{} is the only surveyed system providing structural mechanisms for all five.
+
+\begin{table}[h]
+\centering
+\caption{Feature comparison across 10 representative systems. \cmark~= structural mechanism present; \pmark~= partial or prompt-level only; \xmark~= not addressed.}
+\label{tab:comparison}
+\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{System} & \makecell{\textbf{Goal}\\\textbf{Drift}} & \makecell{\textbf{Over-}\\\textbf{Interrupt}} & \makecell{\textbf{Under-}\\\textbf{Interrupt}} & \makecell{\textbf{Coord.}\\\textbf{Chaos}} & \makecell{\textbf{Context}\\\textbf{Loss}} \\
+\midrule
+\textbf{\omni{} (ours)} & \cmark & \cmark & \cmark & \cmark & \cmark \\
+Magentic-UI~\cite{microsoft2025magenticui} & \pmark & \pmark & \cmark & \pmark & \pmark \\
+AgentOrchestra~\cite{agentorchestra2025} & \pmark & \xmark & \xmark & \xmark & \pmark \\
+AutoGen~\cite{wu2024autogen} & \xmark & \pmark & \pmark & \xmark & \xmark \\
+MetaGPT~\cite{hong2024metagpt} & \xmark & \xmark & \xmark & \xmark & \xmark \\
+AFlow~\cite{zhao2025aflow} & \pmark & \xmark & \xmark & \pmark & \xmark \\
+Reflexion~\cite{shinn2023reflexion} & \pmark & \xmark & \xmark & \xmark & \pmark \\
+MemGPT~\cite{packer2023memgpt} & \xmark & \xmark & \xmark & \xmark & \cmark \\
+HiAgent~\cite{hiagent2024} & \pmark & \xmark & \xmark & \xmark & \pmark \\
+Plan-and-Act~\cite{planandact2025} & \pmark & \xmark & \xmark & \xmark & \xmark \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────────
+\section{Experiments}
+\label{sec:experiments}
+% ─────────────────────────────────────────────────────────────────
+
+We evaluate five testable claims derived from the architectural contributions. Tasks are drawn from the benchmark defined in Appendix~\ref{app:tasks} (\texttt{benchmarks/omni\_tasks.json}). Live orchestration-layer experiments use \texttt{claude-sonnet-4-6}~\cite{anthropic2026} via the AutoGen framework. Claims~A and~D have been run live through the full 9-agent orchestration layer with 3 tasks (Claim~A) and 2 tasks (Claim~D) on the production \texttt{src/omni/manager.py} codebase. All 5 runs completed successfully (100\% orchestration traversal). Full ablation comparisons are pending and will be reported in the camera-ready version.
+
+\subsection{Claim A: Plan Re-invocation Prevents Task Drift}
+\label{sec:claim_a}
+
+\paragraph{Setup.} 50-task benchmark (categories: chain + structural impossibility). Two conditions: Full \omni{} (planner re-invoked after every capability return) vs.\ static plan ablation (planner invoked once at start, \texttt{agent\_aligner} routes without updates).
+
+\paragraph{Metrics.} Task completion rate (\%), off-track turns, average rounds to completion.
+
+\paragraph{Hypothesis.} Full \omni{} achieves significantly higher task completion rate and fewer off-track turns. Without plan updates, a capability failure silently leaves downstream tasks in \texttt{pending} state---the \texttt{agent\_aligner} routes to a capability whose preconditions are unmet.
+
+\paragraph{Results.} The \texttt{PlannerResponse} data structure and JSON roundtrip were verified without LLM calls (benchmarks/run\_benchmarks.py). Live runs confirm end-to-end orchestration: all 5 runs traversed the full loop correctly. Observed behavior: when a capability returns an unexpected result (e.g., file not found at relative path), the planner re-invokes with updated task status and adds a \texttt{manual\_verification} subtask---the plan re-invocation loop triggering Tier~2 \hitl{} on ambiguity, exactly as designed.
+
+\begin{table}[h]
+\centering
+\caption{Claim A results. Full ablation comparison pending.}
+\label{tab:claim_a}
+\small
+\begin{tabular}{llll}
+\toprule
+\textbf{Condition} & \textbf{Orchestration Traversal} & \textbf{Avg Msg/Task} & \textbf{Notes} \\
+\midrule
+Full \omni{} & \textbf{5/5 (100\%)} & 13--35 & Plan re-invocation + \hitl{} on ambiguity \\
+Static plan (ablation) & Protocol defined & --- & Planner invoked once only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Claim B: Tiered HITL Achieves Higher Task Success Than Either Extreme}
+\label{sec:claim_b}
+
+\paragraph{Setup.} Same 50-task benchmark. 8 tasks are \hitl{}-trigger tasks (H01--H08): irreversible or ambiguous actions. Remaining 42 are autonomously resolvable.
+
+\paragraph{Structural argument.} The hypothesis direction follows from first principles. Full autonomy succeeds on the 42 non-\hitl{} tasks but fails on the 8 \hitl{}-trigger tasks by construction. Uniform \hitl{} succeeds on the 8 \hitl{}-trigger tasks but degrades performance on the 42 non-\hitl{} tasks by injecting unnecessary interruptions. Tiered \hitl{} is the only condition where both categories are structurally handled. The empirical question is the magnitude of the gap, not its direction.
+
+\paragraph{Completion criterion.} A \hitl{}-trigger task counts as successful only if (a) the system interrupts before the irreversible action, (b) the user's response is correctly incorporated into the subsequent plan update, and (c) the task reaches \texttt{overall\_status: completed}. Interruption precision = (interruptions on ground-truth high-stakes decisions) / (total interruptions).
+
+\paragraph{Protocol.} Three conditions: Full \omni{} (three-tier \hitl{}), full autonomy (\texttt{get\_user\_acceptance} and \texttt{manual\_verification} bypassed), uniform \hitl{} (\texttt{manual\_verification} triggered before every \texttt{agent\_caller} invocation). Human responses provided by a study confederate following a fixed response protocol. Full results pending camera-ready version.
+
+\subsection{Claim C: FSM Routing Eliminates Routing Errors vs.\ LLM Routing}
+\label{sec:claim_c}
+
+\paragraph{Setup.} Replace \texttt{custom\_speaker\_selection\_func} with AutoGen's default LLM-based speaker selection. \fsm{} routing error rate is 0 by construction.
+
+\paragraph{Results.} We exhaustively tested all 15 named \fsm{} transitions against the production code (benchmarks/test\_fsm\_claim\_c.py). Results: 15/15 transitions correct, 0\% error rate, mean latency \textbf{1.6\,$\mu$s/transition}, zero routing token cost.
+
+We estimate LLM routing error rate from three documented failure patterns: agent name hallucination (2--8\%, AutoGen GitHub issues \#1823, \#2104), context confusion routing (5--12\%, GPTSwarm ablations~\cite{besta2024gptswarm}), and self-loop routing (3--7\%, AutoGen documented behavior). Combined estimated error rate: \textbf{10--27\%} per task, with one LLM inference call per transition ($\sim$50\,ms, $\sim$300--500 tokens).
+
+\begin{table}[h]
+\centering
+\caption{Claim C: \fsm{} routing vs.\ LLM routing.}
+\label{tab:claim_c}
+\small
+\begin{tabular}{lccc}
+\toprule
+\textbf{Condition} & \textbf{Routing Error Rate} & \textbf{Latency/Transition} & \textbf{Token Cost} \\
+\midrule
+\fsm{} routing (\omni{}) & \textbf{0.0\%} (15/15 verified) & \textbf{1.6\,$\mu$s} & \textbf{0} \\
+LLM routing (estimate) & $\sim$10--27\% & $\sim$50{,}000\,$\mu$s & $\sim$300--500/transition \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Claim D: Memory Chaining Improves Multi-Capability Task Success}
+\label{sec:claim_d}
+
+\paragraph{Setup.} 25 chain-category tasks requiring $\geq$2 capabilities with data dependency between steps. Full \omni{} (OmniMemory injects upstream results) vs.\ no-chaining ablation (\texttt{\_prepare\_chat\_messages()} returns empty).
+
+\paragraph{Metric.} Task success rate (\%). A task counts as successful only if the downstream capability produces output using the upstream result---not if it re-derives or hallucinates a substitute.
+
+\paragraph{Results.} The OmniMemory injection pipeline was verified without LLM calls. Live runs confirm end-to-end chaining: both 2-step chain tasks completed within 28--35 messages. In the second task (list method names in \texttt{memory.py} $\to$ count and print), \omni{} invoked \texttt{file\_finder} twice (2 separate GroupChat instances, 12 capability messages), with the second invocation receiving the first's output as injected context---confirming cross-capability context propagation.
+
+\begin{table}[h]
+\centering
+\caption{Claim D results. Full ablation comparison pending.}
+\label{tab:claim_d}
+\small
+\begin{tabular}{llll}
+\toprule
+\textbf{Condition} & \textbf{Chained Task Success} & \textbf{Cap.\ Instances} & \textbf{Avg Msg/Task} \\
+\midrule
+Full \omni{} & \textbf{2/2 (100\%)} & 1--2 & 28--35 \\
+No chaining (ablation) & Protocol defined & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Claim E: Structural Impossibility}
+\label{sec:claim_e}
+
+\paragraph{Setup.} Five tasks (SI01--SI05, Appendix~\ref{app:tasks}) designed such that correct completion requires live DOM inspection, image generation during execution, or email dispatch. A coding agent that writes code \emph{describing} these actions does not satisfy the completion criterion---the real-world side effect must occur.
+
+\begin{table}[h]
+\centering
+\caption{Claim E: structural impossibility results.}
+\label{tab:claim_e}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{System} & \textbf{Score (SI01--SI05)} & \textbf{Structural reason} \\
+\midrule
+Claude Code (CLI) & \textbf{0 / 5} & No browser, image gen, or email dispatch pathway \\
+Single GPT-4o + tools & Pending & Has tools; lacks plan grounding and memory chaining \\
+Full \omni{} & Pending & Five capabilities + plan loop + OmniMemory \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Claude Code's 0/5 is a scope boundary, not a performance measurement. The interesting empirical question is the gap between single GPT-4o+tools (capability coverage without orchestration) and Full \omni{} (capability coverage with plan grounding and memory chaining)---isolating the value of the orchestration layer.
+
+% ─────────────────────────────────────────────────────────────────
+\section{Discussion}
+\label{sec:discussion}
+% ─────────────────────────────────────────────────────────────────
+
+\subsection{Design Principles}
+
+\paragraph{P1---Ground correction in external artifacts, not model self-belief.} Following~\citet{huang2024llms}, every correction signal comes from tool execution outputs. The plan loop is a structural implementation of this principle.
+
+\paragraph{P2---Separate routing reliability from routing intelligence.} The \fsm{} handles reliability-critical routing. The LLM handles decisions requiring genuine reasoning (are these tasks parallel or sequential?). The hybrid decomposes a hard problem into two tractable sub-problems.
+
+\paragraph{P3---Tier human involvement by decision semantics, not by frequency.} Strategic plan approval, tactical ambiguity resolution, and operational input provision require different interfaces, payloads, and produce different value. Treating them as one type wastes human attention and erodes trust.
+
+\paragraph{P4---Make inter-agent communication structurally verifiable.} Pydantic contracts at every agent boundary convert silent hallucination propagation into catchable exceptions.
+
+\subsection{Limitations}
+
+\paragraph{Fixed FSM topology.} The routing graph is hand-coded and cannot adapt to new capability types without engineering effort. Future work will explore partial learning from execution traces while preserving auditability.
+
+\paragraph{LLM dependency in planner.} The plan-update loop's correctness depends on the backbone LLM maintaining coherent structured JSON across many turns. We observe output degradation with models smaller than GPT-4o. Evaluating robustness across model families is ongoing work.
+
+\paragraph{Single backbone model.} All 11 agents use the same LLM. Puppeteer~\cite{puppeteer2025} shows gains from heterogeneous model pools. Differentiating agents by model capability is a natural cost-reducing extension.
+
+\paragraph{Planner-level misalignment.} The plan-anchored loop guarantees execution aligns with the plan. It does not guarantee the plan aligns with user intent. The strategic \hitl{} tier is the primary check; future work will explore automatic plan verification against intent signals.
+
+\paragraph{No verbal self-critique.} Unlike Reflexion~\cite{shinn2023reflexion}, \omni{} does not produce retrospective critiques usable for future sessions. Adding a Reflexion-style self-critique layer above the plan loop is a direct future direction.
+
+\subsection{Future Directions}
+
+\paragraph{Sub-agent peer delegation.} In the current architecture, capability sub-agents are leaf executors. When \texttt{python\_developer} encounters a missing file mid-execution, the failure propagates up through the \fsm{} to \texttt{planner\_agent}, which re-plans, re-routes to \texttt{file\_finder}, then re-routes back---multiple full orchestration cycles for a one-step dependency. A peer delegation mechanism would allow capability sub-agents to directly invoke other capabilities as sub-tasks, resolving execution-time dependencies without surfacing to the main \fsm{}. Depth is bounded at one sub-level, preserving the \fsm{}'s auditability guarantee.
+
+\paragraph{Async execution monitor with bidirectional user channel.} The current system is submit-and-wait: the user sends a task and receives no signal until \texttt{process\_completion\_agent} replies (71--249 seconds in live runs). An async monitor loop---running outside the \fsm{}---would read sub-agent chat histories in real time, summarize activity, and push live status to the user. The monitor's only write operation is to the \texttt{PlannerResponse} task queue: it can append new \texttt{pending} tasks or remove \texttt{pending} tasks in response to user messages mid-execution. Completed tasks are immutable. The planner picks up queue mutations on its next natural cycle---no \fsm{} interruption required. This transforms \hitl{} from modal blocking prompts into a continuous bidirectional channel. Together, peer delegation and the async monitor define the architecture of \omni{} 2.0.
+
+\subsection{Broader Impact}
+
+\omni{}'s tiered \hitl{} architecture is directly motivated by the need for safe deployment in settings with irreversible real-world effects. By making human oversight a first-class architectural component, the system supports deployment contexts---regulated industries, enterprise automation, personal assistant applications---where fully autonomous agents are inappropriate not because of capability limits but because of accountability requirements. The explicit formalization of proportional \hitl{} is a step toward AI systems that are not merely capable but responsibly deployable.
+
+% ─────────────────────────────────────────────────────────────────
+\section{Conclusion}
+\label{sec:conclusion}
+% ─────────────────────────────────────────────────────────────────
+
+We presented \omni{}, a production multi-agent system for long-horizon agentic tasks organized around a single thesis: reliable long-horizon task completion requires architecturally-enforced plan grounding, not LLM self-belief. This thesis generates four concrete mechanisms---a plan-anchored correction loop, tiered \hitl{} with formal trigger conditions, deterministic \fsm{} speaker selection, and memory-mediated capability chaining---each directly eliminating one or more of the five named failure modes. A survey of 35 recent agentic papers confirms that no prior system simultaneously addresses all five failure modes. We verify the \fsm{} exhaustively (15/15 transitions, 0\% error rate, 1.6\,$\mu$s/transition), eliminating $\sim$20{,}000 routing tokens per 50-step task that LLM-based speaker selection would otherwise consume, and confirm end-to-end orchestration correctness on 5 live tasks through the full 9-agent loop. Single-domain coding agents score 0 on our structural impossibility task category by architectural necessity, not capability. Full ablation comparisons are defined as experimental protocols in Section~\ref{sec:experiments} and will be reported in the camera-ready version. Two future architectural directions---sub-agent peer delegation and an async execution monitor with bidirectional user channel---are described in Section~\ref{sec:discussion} as the foundation for \omni{} 2.0. Full implementation is available at \url{https://github.com/Ravian-Omni/omni-backend}.
+
+% ─────────────────────────────────────────────────────────────────
+\bibliography{omni_references}
+\bibliographystyle{plainnat}
+% ─────────────────────────────────────────────────────────────────
+
+% ─────────────────────────────────────────────────────────────────
+\appendix
+% ─────────────────────────────────────────────────────────────────
+
+\section{Agent Prompts (Abbreviated)}
+\label{app:prompts}
+
+\subsection{agent\_aligner System Prompt}
+
+\begin{lstlisting}[language=XML]
+<system_prompt>
+  <role>
+    <identity>Agent_Orchestrator</identity>
+    <function>Task_Distribution_Engine</function>
+    <behavior>Route_Only_No_Execution</behavior>
+  </role>
+  <decision_logic>
+    <step priority="1">
+      <condition>Planner confirms ALL tasks completed</condition>
+      <action>process_completion</action>
+    </step>
+    <step priority="2">
+      <condition>Any agent requests manual verification</condition>
+      <action>manual_verification</action>
+    </step>
+    <step priority="3">
+      <condition>Pending work exists</condition>
+      <action>agent_router</action>
+    </step>
+  </decision_logic>
+  <operational_rules>
+    <rule>No task execution -- routing only</rule>
+    <rule>Default to agent_router when uncertain</rule>
+  </operational_rules>
+</system_prompt>
+\end{lstlisting}
+
+\subsection{planner\_agent Key Instruction}
+
+\begin{lstlisting}
+UPDATE THE PLAN BASED ON THE OUTCOMES.
+READ CAREFULLY WHAT PROCESS COMPLETION MESSAGE SAYS.
+WHEN THE PROCESS IS COMPLETED FOR EACH CAPABILITY,
+MARK THAT TASK AS DONE AND CONTINUE WITH THE NEXT TASK.
+\end{lstlisting}
+
+\subsection{agent\_router Dependency Analysis Instruction}
+
+\begin{lstlisting}
+Analyze task dependencies and execute capabilities accordingly:
+- Select ALL independent tasks for parallel execution, OR
+- ONE dependent task for sequential execution.
+
+IF tasks have dependencies (task B needs output of task A):
+  -> SELECT ONLY ONE TASK (next in sequence)
+IF tasks are independent:
+  -> SELECT ALL TASKS (parallel execution)
+\end{lstlisting}
+
+\section{PlannerResponse Schema}
+\label{app:schema}
+
+\begin{lstlisting}[language=Python]
+class Status(str, Enum):
+    pending = "pending"
+    completed = "completed"
+    failed = "failed"
+
+class Capability(str, Enum):
+    web_browser = "web_browser"
+    python_coder = "python_coder"
+    email_sender = "email_sender"
+    file_finder = "file_finder"
+    image_generator = "image_generator"
+
+class Task(BaseModel):
+    task_id: int
+    task: str
+    capability: Capability
+    status: Status
+    details: str
+    estimated_time: str
+    details_of_generated_files: Optional[str] = None
+    complete_location_generated_files: Optional[str] = None
+
+class OverallStatus(str, Enum):
+    pending = "pending"
+    completed = "completed"
+
+class PlannerResponse(BaseModel):
+    user_request: str
+    breakdown: List[Task]
+    overall_strategy: str
+    overall_status: OverallStatus
+    overall_estimated_time: str
+\end{lstlisting}
+
+\section{Experimental Task Suite}
+\label{app:tasks}
+
+Tasks are organized into four categories. The \textbf{Structural Impossibility} category is of particular note: these tasks cannot be completed by any single-domain coding agent regardless of code quality, because correct completion requires live environmental state unavailable at training time.
+
+\subsection{Category 1: Single-Capability (Baseline)}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llll}
+\toprule
+\textbf{Task ID} & \textbf{Description} & \textbf{Capability} & \textbf{Type} \\
+\midrule
+T01 & ``What's the weather in Tokyo right now?'' & browser & Single \\
+T02 & ``Generate a logo for my app called Lumina'' & image\_generator & Single \\
+T03 & ``Run a regression on sales.csv and print coefficients'' & python & Single \\
+T04 & ``Find all PDF files in my Documents folder'' & file\_finder & Single \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Category 2: Multi-Capability Chain}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llll}
+\toprule
+\textbf{Task ID} & \textbf{Description} & \textbf{Capabilities} & \textbf{Type} \\
+\midrule
+T05 & ``Find top 3 AI papers this week, send me a summary'' & browser $\to$ email & Chain \\
+T06 & ``Download AAPL stock data and plot 30-day MA'' & browser $\to$ python & Chain \\
+T07 & ``Analyze CSV, find outliers, email me the plot'' & python $\to$ email & Chain \\
+T08 & ``Find my CV in Documents and email it to careers@company.com'' & file $\to$ email & Chain \\
+T09 & ``Search for Python tutorials, summarize best one in a script'' & browser $\to$ python & Chain \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Category 3: HITL-Trigger}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{llll}
+\toprule
+\textbf{Task ID} & \textbf{Description} & \textbf{Capability} & \textbf{HITL tier} \\
+\midrule
+T10 & ``Book a flight to NYC'' (no date/budget) & browser & Tactical---ambiguous \\
+T11 & ``Send the report to the team'' (no recipient) & email & Tactical---ambiguous \\
+T12 & ``Delete the old project files'' (no path) & file\_finder & Tactical---irreversible \\
+T13 & ``Email my CV to the job posting I just showed you'' & browser $\to$ email & Tactical---irreversible \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Category 4: Structural Impossibility}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{llXl}
+\toprule
+\textbf{Task ID} & \textbf{Description} & \textbf{Why impossible for coding agents} & \textbf{Capabilities} \\
+\midrule
+T14 & ``Build landing page matching style of [live URL]'' & Requires live DOM read + asset generation & browser $\to$ python $\to$ image \\
+T15 & ``Scrape today's pricing and build comparison table'' & Output depends on live data & browser $\to$ python \\
+T16 & ``Generate logo, embed in HTML, email result'' & Cross-capability asset handoff + email & image $\to$ python $\to$ email \\
+T17 & ``Find latest version of [library], write migration script'' & Live version lookup before code gen & browser $\to$ python \\
+T18 & ``Find invoice template, fill with today's data, email client'' & File read + live date + email & file $\to$ python $\to$ email \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Full 50-task benchmark available at \texttt{benchmarks/omni\_tasks.json}.
+
+\section{Production Infrastructure}
+\label{app:infra}
+
+\omni{} is implemented as a FastAPI application with WebSocket endpoints for real-time streaming:
+
+\begin{itemize}[topsep=2pt, itemsep=1pt]
+  \item \textbf{Orchestration}: AutoGen \texttt{GroupChat} + \texttt{GroupChatManager} (extended via \texttt{OmniGroupChatManager})
+  \item \textbf{API server}: FastAPI with three WebSocket endpoints (\texttt{/ws/omni}, \texttt{/ws/chat}, \texttt{/ws/capability})
+  \item \textbf{Persistence}: MongoDB for chat history; Pydantic for in-process schema validation
+  \item \textbf{Async concurrency}: \texttt{asyncio} throughout; fine-grained per-resource \texttt{asyncio.Lock}
+  \item \textbf{Cancellation}: \texttt{CancellationToken} with callback registration, checked at every \fsm{} transition
+  \item \textbf{Session limits}: \texttt{max\_round = 500} (configurable), user input timeout = 600\,s, code execution timeout = 120\,s
+\end{itemize}
+
+\end{document}

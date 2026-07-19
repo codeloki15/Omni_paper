@@ -1,0 +1,132 @@
+[
+  {
+    "task_id": "GAIA_1",
+    "source": "GAIA Level 2",
+    "description": "Search the web to find the country whose capital city has the highest elevation above sea level among all G20 member nations. Then find the current population of that capital city. Finally, write and execute a Python script that: (1) prints the country name, capital city, elevation in meters, and population; (2) calculates how many times higher that capital is than the average elevation of a capital city worldwide (use 240m as the world average); (3) calculates the population density if the city area is 2,870 km\u00b2.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "reasoning_hops": 5,
+    "success": true,
+    "reason": "process_completion_agent fired + multi-cap chain",
+    "elapsed_s": 139.1,
+    "message_count": 15,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "process_completion_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "GAIA_2",
+    "source": "GAIA Level 2",
+    "description": "Find the most recent Nature or Science paper (published in 2025) that cites both 'CRISPR' and 'cancer immunotherapy' in its title or abstract. Extract: title, authors, journal, DOI, and publication date. Then write a Python script that: (1) prints all five fields; (2) computes how many days ago the paper was published from today's date (June 23 2026); (3) counts the number of words in the abstract.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "reasoning_hops": 4,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded (9044 chars)",
+    "elapsed_s": 245.3,
+    "message_count": 28,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "GAIA_3",
+    "source": "GAIA Level 2",
+    "description": "Find the current market capitalisation of the three largest semiconductor companies by market cap (in USD). Then find the current price of a 1 kg bar of 99.99% pure gold in USD. Write and execute a Python script that: (1) prints each company's name and market cap; (2) calculates how many 1kg gold bars each company's market cap could buy; (3) calculates the total market cap of the three companies combined, in billions USD; (4) prints which company's market cap is closest to the GDP of South Korea (find South Korea's current nominal GDP too).",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "reasoning_hops": 6,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded (2013 chars)",
+    "elapsed_s": 126.9,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "GAIA_4",
+    "source": "GAIA Level 3",
+    "description": "This is a multi-hop research task. Step 1: Find the current UN Secretary-General and the year they took office. Step 2: Find who held that position 20 years before they took office (i.e. if they started in 2017, who was SG in 1997). Step 3: Find the birth country of that previous Secretary-General. Step 4: Find the current nominal GDP per capita of that birth country in USD. Step 5: Write and execute a Python script that prints all five pieces of information and calculates: (a) the ratio of that country's GDP per capita to the world average GDP per capita (use $13,100 as world average), and (b) how many years of that country's per-capita GDP it would take to equal $1 million USD.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "reasoning_hops": 7,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded (3095 chars)",
+    "elapsed_s": 170.5,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "GAIA_5",
+    "source": "GAIA Level 2",
+    "description": "Find the current #1 ranked tennis player (ATP singles, men's) and the current #1 ranked tennis player (WTA singles, women's). For each player: find their nationality, date of birth, and current career prize money earned in USD. Then write and execute a Python script that: (1) prints all information for both players; (2) calculates both players' ages in years and days as of today (June 23, 2026); (3) calculates the combined total career prize money; (4) determines which player has earned more prize money per day of their career (starting from their 18th birthday as proxy for pro start).",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "reasoning_hops": 5,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded (5844 chars)",
+    "elapsed_s": 236.5,
+    "message_count": 28,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  }
+]

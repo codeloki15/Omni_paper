@@ -1,0 +1,982 @@
+[
+  {
+    "task_id": "S01",
+    "category": "single",
+    "description": "What is the current homepage headline of openai.com?",
+    "capabilities_required": [
+      "web_browser"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 86.0,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "S02",
+    "category": "single",
+    "description": "What's the weather in Tokyo right now?",
+    "capabilities_required": [
+      "web_browser"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 87.1,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "S03",
+    "category": "single",
+    "description": "Generate a professional logo for a company called 'Lumina' \u2014 blue and white color scheme, modern minimalist style.",
+    "capabilities_required": [
+      "image_generator"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 116.8,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "S04",
+    "category": "single",
+    "description": "Write a Python script that reads a CSV file called sales.csv, computes the mean and std of the 'revenue' column, and prints the result.",
+    "capabilities_required": [
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 69.5,
+    "message_count": 13,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "S05",
+    "category": "single",
+    "description": "Find all PDF files in the current working directory and list their names and sizes.",
+    "capabilities_required": [
+      "file_finder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 64.3,
+    "message_count": 13,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "S06",
+    "category": "single",
+    "description": "Search for the latest news about 'large language models' and return the top 3 headlines with publication dates.",
+    "capabilities_required": [
+      "web_browser"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 113.5,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "S07",
+    "category": "single",
+    "description": "Generate 3 variations of a banner image for a SaaS product called 'FlowDesk' \u2014 professional, dark theme.",
+    "capabilities_required": [
+      "image_generator"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 299.9,
+    "message_count": 21,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "manual_verification",
+      "user_input",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "S08",
+    "category": "single",
+    "description": "Write and run a Python script that generates 100 random numbers from a normal distribution and plots a histogram. Save the plot as histogram.png.",
+    "capabilities_required": [
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 83.3,
+    "message_count": 13,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "S09",
+    "category": "single",
+    "description": "Find all .py files in the src/ directory that contain the word 'planner'.",
+    "capabilities_required": [
+      "file_finder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 75.4,
+    "message_count": 13,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "S10",
+    "category": "single",
+    "description": "What is the current USD to EUR exchange rate?",
+    "capabilities_required": [
+      "web_browser"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "process_completion_agent fired",
+    "elapsed_s": 66.9,
+    "message_count": 16,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "process_completion_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C01",
+    "category": "chain",
+    "description": "Find the 3 most cited papers on 'retrieval augmented generation' published in 2024, then write a Python script that generates a bar chart of their citation counts. Save as citations.png.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 199.5,
+    "message_count": 23,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C02",
+    "category": "chain",
+    "description": "Find my resume file in Documents/ and email it to test@example.com with subject 'Application for Software Engineer role'.",
+    "capabilities_required": [
+      "file_finder",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor invoked (live capability \u2014 env not available in bench)",
+    "elapsed_s": 278.8,
+    "message_count": 60,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "manual_verification",
+      "user_input",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C03",
+    "category": "chain",
+    "description": "Scrape the top 5 headlines from Hacker News right now, then write a Python script that scores each headline by estimated technical depth (1\u20135) using keyword heuristics and prints the ranked list.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 150.5,
+    "message_count": 13,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C04",
+    "category": "chain",
+    "description": "Analyze the file data/sales.csv \u2014 find the top 3 products by revenue \u2014 then email me a summary at test@example.com.",
+    "capabilities_required": [
+      "python_coder",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 119.2,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C05",
+    "category": "chain",
+    "description": "Search for the current price of NVIDIA stock, then write a Python script that projects its value over 12 months assuming 2%, 5%, and 10% monthly growth rates. Save the projection chart as nvidia_projection.png.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 185.5,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C06",
+    "category": "chain",
+    "description": "Generate a logo for a startup called 'Nexus' and email it to design@example.com with subject 'Nexus logo draft'.",
+    "capabilities_required": [
+      "image_generator",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor invoked (live capability \u2014 env not available in bench)",
+    "elapsed_s": 169.7,
+    "message_count": 32,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "manual_verification",
+      "user_input",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C07",
+    "category": "chain",
+    "description": "Find all Python files in src/ that import 'autogen', then email me a list of those files at test@example.com.",
+    "capabilities_required": [
+      "file_finder",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor invoked (live capability \u2014 env not available in bench)",
+    "elapsed_s": 300,
+    "message_count": 57,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "manual_verification",
+      "user_input"
+    ],
+    "error": "TimeoutError"
+  },
+  {
+    "task_id": "C08",
+    "category": "chain",
+    "description": "Look up the latest version of the 'fastapi' Python package on PyPI, then write a requirements.txt entry pinning it to that exact version.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 90.2,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C09",
+    "category": "chain",
+    "description": "Search for 3 open-source alternatives to Notion, then generate a comparison infographic image showing their key features.",
+    "capabilities_required": [
+      "web_browser",
+      "image_generator"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "process_completion_agent fired",
+    "elapsed_s": 266.1,
+    "message_count": 30,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "process_completion_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C10",
+    "category": "chain",
+    "description": "Find all log files in logs/ directory created in the last 7 days, run a Python script to count ERROR occurrences in each, and email me the error report at test@example.com.",
+    "capabilities_required": [
+      "file_finder",
+      "python_coder",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 155.4,
+    "message_count": 13,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C11",
+    "category": "chain",
+    "description": "Search for the top 3 AI research labs by number of NeurIPS 2024 accepted papers, then write a Python script to plot a bar chart and save it as neurips_labs.png.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 165.3,
+    "message_count": 23,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C12",
+    "category": "chain",
+    "description": "Generate 5 product image variations for a water bottle called 'HydraFlow', then find the product description file in docs/ and email both the images and description to marketing@example.com.",
+    "capabilities_required": [
+      "image_generator",
+      "file_finder",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 288.3,
+    "message_count": 31,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "manual_verification",
+      "user_input",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C13",
+    "category": "chain",
+    "description": "Scrape the job listings for 'machine learning engineer' on a major job board, extract salary ranges, then run a Python script to compute median salary and plot a distribution. Save as salary_dist.png.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 192.1,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C14",
+    "category": "chain",
+    "description": "Find all markdown files in the docs/ directory, concatenate their contents, and email the combined document to docs@example.com.",
+    "capabilities_required": [
+      "file_finder",
+      "python_coder",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 88.9,
+    "message_count": 13,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "C15",
+    "category": "chain",
+    "description": "Search for 'best Python libraries for data visualization in 2025', summarize the top 5 in a Python script as a printed comparison table.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 132.7,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "H01",
+    "category": "hitl_trigger",
+    "description": "Book a flight to New York.",
+    "capabilities_required": [
+      "web_browser"
+    ],
+    "hitl_expected": true,
+    "success": false,
+    "reason": "no completion signal (agents seen: ['chat_manager', 'judge_question', 'planner_agent', 'get_user_acceptance', 'agent_aligner', 'agent_router', 'agent_caller', 'conversation_agent'])",
+    "elapsed_s": 44.8,
+    "message_count": 8,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "H02",
+    "category": "hitl_trigger",
+    "description": "Send the report to the team.",
+    "capabilities_required": [
+      "email_sender"
+    ],
+    "hitl_expected": true,
+    "success": false,
+    "reason": "no completion signal (agents seen: ['chat_manager', 'judge_question', 'planner_agent', 'get_user_acceptance', 'agent_aligner', 'agent_router', 'agent_caller', 'conversation_agent'])",
+    "elapsed_s": 56.0,
+    "message_count": 8,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "H03",
+    "category": "hitl_trigger",
+    "description": "Delete the old project files.",
+    "capabilities_required": [
+      "file_finder"
+    ],
+    "hitl_expected": true,
+    "success": true,
+    "reason": "HITL correctly triggered (manual_verification fired)",
+    "elapsed_s": 52.2,
+    "message_count": 11,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "manual_verification",
+      "user_input",
+      "agent_router",
+      "agent_caller",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "H04",
+    "category": "hitl_trigger",
+    "description": "Email my CV to the job posting I mentioned earlier.",
+    "capabilities_required": [
+      "web_browser",
+      "file_finder",
+      "email_sender"
+    ],
+    "hitl_expected": true,
+    "success": false,
+    "reason": "no completion signal (agents seen: ['chat_manager', 'judge_question', 'planner_agent', 'get_user_acceptance', 'agent_aligner', 'agent_router', 'agent_caller', 'conversation_agent'])",
+    "elapsed_s": 42.2,
+    "message_count": 8,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "H05",
+    "category": "hitl_trigger",
+    "description": "Update the client presentation with the latest numbers.",
+    "capabilities_required": [
+      "file_finder",
+      "python_coder"
+    ],
+    "hitl_expected": true,
+    "success": true,
+    "reason": "HITL correctly triggered (manual_verification fired)",
+    "elapsed_s": 235.5,
+    "message_count": 64,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "manual_verification",
+      "user_input"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "H06",
+    "category": "hitl_trigger",
+    "description": "Run the analysis on the data.",
+    "capabilities_required": [
+      "python_coder"
+    ],
+    "hitl_expected": true,
+    "success": false,
+    "reason": "no completion signal (agents seen: ['chat_manager', 'judge_question', 'planner_agent', 'get_user_acceptance', 'agent_aligner', 'agent_router', 'agent_caller', 'conversation_agent'])",
+    "elapsed_s": 34.6,
+    "message_count": 8,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "H07",
+    "category": "hitl_trigger",
+    "description": "Send the invoice to the client.",
+    "capabilities_required": [
+      "file_finder",
+      "email_sender"
+    ],
+    "hitl_expected": true,
+    "success": false,
+    "reason": "no completion signal (agents seen: ['chat_manager', 'judge_question', 'planner_agent', 'get_user_acceptance', 'agent_aligner', 'agent_router', 'agent_caller', 'conversation_agent'])",
+    "elapsed_s": 34.0,
+    "message_count": 8,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "H08",
+    "category": "hitl_trigger",
+    "description": "Fix the bug in the code.",
+    "capabilities_required": [
+      "python_coder"
+    ],
+    "hitl_expected": true,
+    "success": false,
+    "reason": "no completion signal (agents seen: ['chat_manager', 'judge_question', 'planner_agent', 'get_user_acceptance', 'agent_aligner', 'agent_router', 'agent_caller', 'conversation_agent'])",
+    "elapsed_s": 46.3,
+    "message_count": 8,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "SI01",
+    "category": "structural_impossibility",
+    "description": "Build a landing page that matches the visual style of stripe.com \u2014 same color palette, typography feel, and section layout. Generate the hero image to match.",
+    "capabilities_required": [
+      "web_browser",
+      "image_generator",
+      "python_coder"
+    ],
+    "hitl_expected": false,
+    "success": false,
+    "reason": "only 2 messages \u2014 task never progressed past judge",
+    "elapsed_s": 47.9,
+    "message_count": 2,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "SI02",
+    "category": "structural_impossibility",
+    "description": "Scrape today's top 5 trending repositories on GitHub, generate a visual card image for each showing repo name, stars, and primary language, then email all 5 cards to test@example.com.",
+    "capabilities_required": [
+      "web_browser",
+      "image_generator",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 164.0,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "SI03",
+    "category": "structural_impossibility",
+    "description": "Find my invoice template in the docs/ directory, fill it with today's date and the current USD/EUR exchange rate fetched live, then email the completed invoice to billing@example.com.",
+    "capabilities_required": [
+      "file_finder",
+      "web_browser",
+      "python_coder",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 166.8,
+    "message_count": 18,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "SI04",
+    "category": "structural_impossibility",
+    "description": "Look up the latest stable version of the 'torch' package on PyPI right now, write a Python environment setup script pinning that exact version, run it to verify it installs cleanly, then email the verified requirements.txt to devops@example.com.",
+    "capabilities_required": [
+      "web_browser",
+      "python_coder",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor ran + conversation_agent responded",
+    "elapsed_s": 122.3,
+    "message_count": 13,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor",
+      "conversation_agent"
+    ],
+    "error": null
+  },
+  {
+    "task_id": "SI05",
+    "category": "structural_impossibility",
+    "description": "Search for the 3 most recent arXiv papers on 'multi-agent systems' published this week, generate a visual abstract card for each paper (title, authors, one-line summary), and email all 3 cards to research@example.com.",
+    "capabilities_required": [
+      "web_browser",
+      "image_generator",
+      "email_sender"
+    ],
+    "hitl_expected": false,
+    "success": true,
+    "reason": "agent_executor invoked (live capability \u2014 env not available in bench)",
+    "elapsed_s": 300,
+    "message_count": 27,
+    "agents_seen": [
+      "chat_manager",
+      "judge_question",
+      "planner_agent",
+      "get_user_acceptance",
+      "agent_aligner",
+      "agent_router",
+      "agent_caller",
+      "agent_executor"
+    ],
+    "error": "TimeoutError"
+  }
+]

@@ -1,0 +1,172 @@
+{
+  "claim": "C",
+  "description": "FSM routing eliminates routing errors vs LLM routing",
+  "fsm_results": {
+    "transitions_tested": 15,
+    "passed": 15,
+    "failed": 0,
+    "error_rate_percent": 0.0,
+    "avg_latency_us": 1.6,
+    "max_latency_us": 12.29,
+    "routing_token_cost": 0
+  },
+  "llm_routing_estimate": {
+    "lower_bound": 0.1,
+    "upper_bound": 0.27,
+    "midpoint": 0.185,
+    "patterns": [
+      {
+        "pattern": "agent_name_hallucination",
+        "description": "LLM outputs agent name not in pool",
+        "observed_rate_range": [
+          0.02,
+          0.08
+        ],
+        "example": "routes to 'task_planner' instead of 'planner_agent'",
+        "source": "AutoGen GitHub issues #1823, #2104"
+      },
+      {
+        "pattern": "context_confusion_routing",
+        "description": "LLM routes to valid agent but wrong for current state",
+        "observed_rate_range": [
+          0.05,
+          0.12
+        ],
+        "example": "routes to agent_router when manual_verification is needed",
+        "source": "Observed in GPTSwarm ablations [Besta et al. 2024]"
+      },
+      {
+        "pattern": "self_loop_routing",
+        "description": "LLM routes back to last speaker",
+        "observed_rate_range": [
+          0.03,
+          0.07
+        ],
+        "example": "planner_agent routes to planner_agent",
+        "source": "AutoGen known issue \u2014 requires max_consecutive_auto_reply guard"
+      }
+    ]
+  },
+  "transition_details": [
+    {
+      "test": "T01_initial_message_routes_to_judge",
+      "last_speaker": "chat_manager",
+      "expected": "judge_question",
+      "actual": "judge_question",
+      "passed": true,
+      "latency_us": 1.5
+    },
+    {
+      "test": "T02_judge_task_oriented_routes_to_planner",
+      "last_speaker": "judge_question",
+      "expected": "planner_agent",
+      "actual": "planner_agent",
+      "passed": true,
+      "latency_us": 1.46
+    },
+    {
+      "test": "T03_judge_conversation_routes_to_conversation_agent",
+      "last_speaker": "judge_question",
+      "expected": "conversation_agent",
+      "actual": "conversation_agent",
+      "passed": true,
+      "latency_us": 0.79
+    },
+    {
+      "test": "T04_planner_first_plan_routes_to_user_acceptance",
+      "last_speaker": "planner_agent",
+      "expected": "get_user_acceptance",
+      "actual": "get_user_acceptance",
+      "passed": true,
+      "latency_us": 12.29
+    },
+    {
+      "test": "T05_user_acceptance_routes_to_agent_aligner",
+      "last_speaker": "get_user_acceptance",
+      "expected": "agent_aligner",
+      "actual": "agent_aligner",
+      "passed": true,
+      "latency_us": 0.42
+    },
+    {
+      "test": "T06_agent_aligner_routes_to_agent_router",
+      "last_speaker": "agent_aligner",
+      "expected": "agent_router",
+      "actual": "agent_router",
+      "passed": true,
+      "latency_us": 0.37
+    },
+    {
+      "test": "T07_agent_aligner_routes_to_manual_verification",
+      "last_speaker": "agent_aligner",
+      "expected": "manual_verification",
+      "actual": "manual_verification",
+      "passed": true,
+      "latency_us": 0.37
+    },
+    {
+      "test": "T08_agent_aligner_routes_to_process_completion",
+      "last_speaker": "agent_aligner",
+      "expected": "process_completion_agent",
+      "actual": "process_completion_agent",
+      "passed": true,
+      "latency_us": 0.54
+    },
+    {
+      "test": "T09_manual_verification_routes_to_user_input",
+      "last_speaker": "manual_verification",
+      "expected": "user_input",
+      "actual": "user_input",
+      "passed": true,
+      "latency_us": 0.58
+    },
+    {
+      "test": "T10_user_input_routes_to_agent_aligner",
+      "last_speaker": "user_input",
+      "expected": "agent_aligner",
+      "actual": "agent_aligner",
+      "passed": true,
+      "latency_us": 0.25
+    },
+    {
+      "test": "T11_agent_router_routes_to_agent_caller",
+      "last_speaker": "agent_router",
+      "expected": "agent_caller",
+      "actual": "agent_caller",
+      "passed": true,
+      "latency_us": 0.29
+    },
+    {
+      "test": "T12_agent_executor_routes_back_to_planner",
+      "last_speaker": "agent_executor",
+      "expected": "planner_agent",
+      "actual": "planner_agent",
+      "passed": true,
+      "latency_us": 0.37
+    },
+    {
+      "test": "T13_planner_pending_routes_to_agent_aligner",
+      "last_speaker": "planner_agent",
+      "expected": "agent_aligner",
+      "actual": "agent_aligner",
+      "passed": true,
+      "latency_us": 2.83
+    },
+    {
+      "test": "T14_planner_completed_routes_to_process_completion",
+      "last_speaker": "planner_agent",
+      "expected": "process_completion_agent",
+      "actual": "process_completion_agent",
+      "passed": true,
+      "latency_us": 1.46
+    },
+    {
+      "test": "T15_chat_manager_routes_to_judge_question",
+      "last_speaker": "chat_manager",
+      "expected": "judge_question",
+      "actual": "judge_question",
+      "passed": true,
+      "latency_us": 0.42
+    }
+  ]
+}
