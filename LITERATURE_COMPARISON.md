@@ -163,7 +163,7 @@ While AFlow and ReAcTree encode parallelism statically in workflow graphs, Omni'
 
 ---
 
-### 2. Partially Novel — RAVIAN Advances Beyond Existing Work
+### 2. Partially Novel — OMNI Advances Beyond Existing Work
 
 | Claim | What's novel | What's already there |
 |---|---|---|
@@ -192,7 +192,7 @@ While AFlow and ReAcTree encode parallelism statically in workflow graphs, Omni'
 This is the most lethal objection. Every paper in this survey with empirical results will be cited against Omni.
 
 *Preemption:* Run at minimum before submission:
-- (a) 50-task ablation: full RAVIAN vs. RAVIAN without plan re-invocation → task completion rate
+- (a) 50-task ablation: full OMNI vs. OMNI without plan re-invocation → task completion rate
 - (b) FSM routing vs. LLM-based routing → routing error rate + latency per turn
 - (c) Tiered HITL vs. no-HITL → task success on ambiguous queries
 - Target GAIA sub-tasks, WebArena, or a custom 3-capability benchmark
@@ -257,7 +257,7 @@ The Omni system is the existence proof that these four principles can co-exist i
 | Inter-agent schema | Free-text strings | Pydantic models (PlannerResponse, AgentSelectionResponse, etc.) |
 | Loop detection | None | LoopDetector sliding window in python_developer |
 
-**RAVIAN's positioning:** Adopt AutoGen as substrate; frame RAVIAN as identifying and solving three production limitations of the base framework.
+**OMNI's positioning:** Adopt AutoGen as substrate; frame OMNI as identifying and solving three production limitations of the base framework.
 
 ---
 
@@ -274,7 +274,7 @@ The Omni system is the existence proof that these four principles can co-exist i
 | Plan management | None across capabilities | plan_anchored loop: planner re-invoked after every capability |
 | Memory propagation | Passive pub-sub (role-filtered retrieval) | Active episodic injection via OmniMemory |
 
-**RAVIAN's positioning:** MetaGPT showed structured communication reduces hallucinations in single-domain pipelines. RAVIAN extends this to heterogeneous cross-domain orchestration plus HITL — properties outside MetaGPT's architectural scope.
+**OMNI's positioning:** MetaGPT showed structured communication reduces hallucinations in single-domain pipelines. OMNI extends this to heterogeneous cross-domain orchestration plus HITL — properties outside MetaGPT's architectural scope.
 
 ---
 
@@ -291,7 +291,7 @@ The Omni system is the existence proof that these four principles can co-exist i
 | Plan persistence | Implicit in graph topology | Explicit Pydantic PlannerResponse re-evaluated after each step |
 | Production readiness | Research prototype | FastAPI + WebSocket + cancellation tokens + MongoDB |
 
-**RAVIAN's positioning:** GPTSwarm optimizes topology offline for benchmark maximization. RAVIAN adopts a fixed FSM for production reliability and auditability, directing saved optimization budget toward HITL, plan-anchoring, and memory chaining.
+**OMNI's positioning:** GPTSwarm optimizes topology offline for benchmark maximization. OMNI adopts a fixed FSM for production reliability and auditability, directing saved optimization budget toward HITL, plan-anchoring, and memory chaining.
 
 ---
 
@@ -307,7 +307,7 @@ The Omni system is the existence proof that these four principles can co-exist i
 | HITL | None | 3-tier with 600s async timeout |
 | Memory | Search-tree traces (for optimizer, not runtime) | OmniMemory for runtime cross-capability context |
 
-**RAVIAN's positioning:** AFlow solves *offline workflow discovery*. RAVIAN solves *online runtime adaptation* — incremental replanning, tiered human correction, and episodic memory propagation when executing against real-world services.
+**OMNI's positioning:** AFlow solves *offline workflow discovery*. OMNI solves *online runtime adaptation* — incremental replanning, tiered human correction, and episodic memory propagation when executing against real-world services.
 
 ---
 
@@ -324,7 +324,7 @@ The Omni system is the existence proof that these four principles can co-exist i
 | Structured contracts | None (free-text) | Pydantic at every agent boundary |
 | Target | Reasoning benchmarks | Production multi-capability personal automation |
 
-**RAVIAN's positioning:** Puppeteer learns routing from outcomes; RAVIAN enforces routing through typed contracts and deterministic FSM, trading statistical optimality for predictability and auditability — properties demanded in enterprise deployment where actions have irreversible side effects.
+**OMNI's positioning:** Puppeteer learns routing from outcomes; OMNI enforces routing through typed contracts and deterministic FSM, trading statistical optimality for predictability and auditability — properties demanded in enterprise deployment where actions have irreversible side effects.
 
 ---
 
@@ -332,7 +332,7 @@ The Omni system is the existence proof that these four principles can co-exist i
 
 **What they do:** Verbal reinforcement learning. Agents generate self-critiques stored in episodic buffer. Actor conditions on reflections on next trial. 91% HumanEval pass@1. No gradient updates. Max 3–5 retrial cycles.
 
-**Key distinction from RAVIAN:** Reflexion operates within single-task retry loops. Omni coordinates 11 specialized agents across 5 heterogeneous capabilities over 500-round sessions. RAVIAN's episodic memory propagates context *across capabilities within one task*, not *across trials of the same task*. No verbal self-critique in RAVIAN — all correction is grounded in external execution artifacts.
+**Key distinction from OMNI:** Reflexion operates within single-task retry loops. Omni coordinates 11 specialized agents across 5 heterogeneous capabilities over 500-round sessions. OMNI's episodic memory propagates context *across capabilities within one task*, not *across trials of the same task*. No verbal self-critique in OMNI — all correction is grounded in external execution artifacts.
 
 ---
 
@@ -340,7 +340,7 @@ The Omni system is the existence proof that these four principles can co-exist i
 
 **What they do:** LLMs cannot improve reasoning via intrinsic self-correction. GPT-4 on GSM8K: 95.5% → 89.0% after self-correction. Distinguishes intrinsic (no external signal) from oracle-guided correction.
 
-**How RAVIAN uses this finding as motivation:** This paper is a design axiom for Omni. RAVIAN's plan-anchored loop does not ask any agent to review its own free-text output. The planner receives actual capability execution results (browser HTML, Python stdout) as external signals and updates structured task statuses — structurally equivalent to the oracle condition the paper identifies as necessary for reliable correction.
+**How OMNI uses this finding as motivation:** This paper is a design axiom for Omni. OMNI's plan-anchored loop does not ask any agent to review its own free-text output. The planner receives actual capability execution results (browser HTML, Python stdout) as external signals and updates structured task statuses — structurally equivalent to the oracle condition the paper identifies as necessary for reliable correction.
 
 **Recommended framing:** *"Huang et al. (2024) demonstrate that intrinsic self-correction degrades LLM accuracy. Omni takes this as a design axiom: every correction signal in our system is grounded in external execution artifacts, not model self-belief."*
 
@@ -350,11 +350,11 @@ The Omni system is the existence proof that these four principles can co-exist i
 
 **What they do:** Hierarchical multi-agent framework with TEA protocol. 5 specialized sub-agents. Self-evolution via textgrad. Dynamic tool synthesis (50+ tools at runtime). 89.04% on GAIA.
 
-**Key advance over RAVIAN:** Self-evolution, dynamic tool synthesis, bidirectional role transformation (A2T, T2A, E2T, T2E, A2E, E2A).
+**Key advance over OMNI:** Self-evolution, dynamic tool synthesis, bidirectional role transformation (A2T, T2A, E2T, T2E, A2E, E2A).
 
-**Key advance of RAVIAN:** 3-tier HITL (absent in AgentOrchestra), deterministic FSM routing, plan-anchored re-invocation, loop detection, production WebSocket infrastructure.
+**Key advance of OMNI:** 3-tier HITL (absent in AgentOrchestra), deterministic FSM routing, plan-anchored re-invocation, loop detection, production WebSocket infrastructure.
 
-**Positioning:** "RAVIAN targets interactive, human-supervised agentic workflows; AgentOrchestra targets fully autonomous expert-level benchmarks. These are complementary operating points on the autonomy/auditability frontier."
+**Positioning:** "OMNI targets interactive, human-supervised agentic workflows; AgentOrchestra targets fully autonomous expert-level benchmarks. These are complementary operating points on the autonomy/auditability frontier."
 
 ---
 
@@ -363,9 +363,9 @@ The Omni system is the existence proof that these four principles can co-exist i
 **What they do:** AutoGen Magentic-One with 6 HITL interaction modes including action guards and co-planning. WebSocket streaming. ChromaDB cross-session memory.
 
 **This is the closest architectural peer to Omni.** Differentiation:
-- RAVIAN: deterministic FSM (zero LLM routing calls) vs. Magentic-UI: LLM-based Orchestrator
-- RAVIAN: Pydantic schema enforcement at all boundaries vs. Magentic-UI: free-form messages
-- RAVIAN: plan-anchored continuous replanning vs. Magentic-UI: user-initiated plan edits
+- OMNI: deterministic FSM (zero LLM routing calls) vs. Magentic-UI: LLM-based Orchestrator
+- OMNI: Pydantic schema enforcement at all boundaries vs. Magentic-UI: free-form messages
+- OMNI: plan-anchored continuous replanning vs. Magentic-UI: user-initiated plan edits
 
 ---
 
@@ -379,17 +379,17 @@ The Omni system is the existence proof that these four principles can co-exist i
 
 ### Magentic-UI, ReConcile, HULA, SWE-agent, CowPilot, ARIA, TravelPlanner, HiAgent
 
-| Paper | Relation to RAVIAN | Citation |
+| Paper | Relation to OMNI | Citation |
 |---|---|---|
-| **ReConcile** (ACL 2024) | Consensus for homogeneous reasoning agents. RAVIAN: sequential pipeline of heterogeneous agents for real-world tool use. Orthogonal. | should-cite |
-| **HULA** (arXiv 2024) | First industrial HITL for coding agents (2 fixed stages). RAVIAN generalizes to 3 tiers + dynamic triggering. | should-cite |
-| **SWE-agent** (NeurIPS 2024) | ACI design for coding. Loop-breaking via linting feedback. RAVIAN's LoopDetector is analogous but capability-agnostic. | should-cite |
-| **CowPilot** (arXiv 2025) | 15.2% human effort → 95% accuracy. Validates tiered HITL efficiency claim. RAVIAN's 3 tiers address CowPilot's single-tier limitation. | should-cite |
+| **ReConcile** (ACL 2024) | Consensus for homogeneous reasoning agents. OMNI: sequential pipeline of heterogeneous agents for real-world tool use. Orthogonal. | should-cite |
+| **HULA** (arXiv 2024) | First industrial HITL for coding agents (2 fixed stages). OMNI generalizes to 3 tiers + dynamic triggering. | should-cite |
+| **SWE-agent** (NeurIPS 2024) | ACI design for coding. Loop-breaking via linting feedback. OMNI's LoopDetector is analogous but capability-agnostic. | should-cite |
+| **CowPilot** (arXiv 2025) | 15.2% human effort → 95% accuracy. Validates tiered HITL efficiency claim. OMNI's 3 tiers address CowPilot's single-tier limitation. | should-cite |
 | **ARIA** (arXiv 2025) | Uncertainty-driven HITL elicitation for knowledge adaptation. Complementary axis: knowledge vs. orchestration. | should-cite |
-| **TravelPlanner** (ICML 2024) | 0.6% GPT-4 success on constrained planning. Motivates RAVIAN's plan-anchored architecture. | should-cite |
-| **HiAgent** (arXiv 2024) | Hierarchical working memory for long-horizon tasks. Single-env, single-agent. RAVIAN: multi-agent, heterogeneous caps, HITL. | should-cite |
+| **TravelPlanner** (ICML 2024) | 0.6% GPT-4 success on constrained planning. Motivates OMNI's plan-anchored architecture. | should-cite |
+| **HiAgent** (arXiv 2024) | Hierarchical working memory for long-horizon tasks. Single-env, single-agent. OMNI: multi-agent, heterogeneous caps, HITL. | should-cite |
 | **ST-WebAgentBench** (arXiv 2024) | 66% policy-compliant completion. Motivates HITL as safety pre-condition. | should-cite |
-| **OSWorld** (NeurIPS 2024) | Multi-application long-horizon benchmark. Motivates RAVIAN's programmatic orchestration design. | should-cite |
+| **OSWorld** (NeurIPS 2024) | Multi-application long-horizon benchmark. Motivates OMNI's programmatic orchestration design. | should-cite |
 
 ---
 

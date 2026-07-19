@@ -840,7 +840,7 @@ The "complex professional" category includes tasks not anticipated at design tim
 | Ambiguity type | HITL question (exact) | User answer |
 |---|---|---|
 | Missing recipient | *"What email address should the hotel report be sent to?"* | `error_omni@mailinator.com` |
-| Missing contact details | *"Could you provide Lokesh's email/phone number?"* | `lokesh@ravian.ai` |
+| Missing contact details | *"Could you provide Lokesh's email/phone number?"* | `lokesh@omni.ai` |
 | Missing email body | *"Please provide the subject and content of the email."* | `"test only"` |
 | Missing parameter | *"Please specify the country for the best cricket batsman."* | `"India"` |
 | Platform credentials required | *"Is user providing Instagram login credentials?"* | `"Nope"` → graceful fallback |

@@ -175,7 +175,7 @@ These are empirically testable claims that would make the paper concrete for rev
 **Hypothesis:** Plan-anchored systems complete more tasks and require fewer rounds.
 
 ### Claim B — Tiered HITL Reduces Unnecessary Human Interrupts vs. Full Autonomy Errors
-**Setup:** Compare 3 conditions: (1) full autonomy, (2) RAVIAN tiered HITL, (3) interrupt-at-every-step. Measure task success rate and human interrupt count.
+**Setup:** Compare 3 conditions: (1) full autonomy, (2) OMNI tiered HITL, (3) interrupt-at-every-step. Measure task success rate and human interrupt count.
 
 **Hypothesis:** Tiered HITL achieves near-full-autonomy success rate with dramatically fewer interrupts than condition 3.
 
@@ -257,7 +257,7 @@ User Message
 
 1. **"Omni: Plan-Anchored Self-Alignment in Multi-Agent LLM Systems"**
 2. **"Deterministic Routing Meets Learned Reasoning: A Hybrid Architecture for Reliable Multi-Agent Task Completion"**
-3. **"RAVIAN: Tiered Human-in-the-Loop Control for Long-Horizon Agentic Tasks"**
+3. **"OMNI: Tiered Human-in-the-Loop Control for Long-Horizon Agentic Tasks"**
 4. **"From Plans to Actions: Self-Aligning Multi-Agent Systems via Structured Feedback Loops"**
 5. **"When to Ask: Proportional HITL in Production Multi-Agent Systems"**
 

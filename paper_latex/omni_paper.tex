@@ -59,9 +59,9 @@
 \title{\omni: A Plan-Grounded Multi-Agent System\\for Long-Horizon Task Completion}
 
 \author{%
-  Ravian Team \\
-  Ravian AI \\
-  \texttt{team@ravian.ai}
+  OMNI Team \\
+  OMNI AI \\
+  \texttt{team@omni.ai}
 }
 
 \begin{document}
@@ -115,7 +115,7 @@ None of these failure modes arise in single-capability agents. They are emergent
   \item \textbf{Memory-mediated capability chaining} (addresses: context loss)---\texttt{OmniMemory}, a session-scoped episodic store that injects upstream execution results as \texttt{context\_keeper} messages into each newly initialized capability GroupChat.
 \end{enumerate}
 
-A survey of 35 recent agentic papers (Section~\ref{sec:related}) confirms that no prior system provides structural mechanisms for all five failure modes simultaneously. The full implementation is available at \url{https://github.com/Ravian-Omni/omni-backend}.
+A survey of 35 recent agentic papers (Section~\ref{sec:related}) confirms that no prior system provides structural mechanisms for all five failure modes simultaneously. The full implementation is available at \url{https://github.com/OMNI-Omni/omni-backend}.
 
 % ─────────────────────────────────────────────────────────────────
 \section{Background and Motivation}
@@ -789,7 +789,7 @@ Claude Code's 0/5 is a scope boundary, not a performance measurement. The intere
 \label{sec:conclusion}
 % ─────────────────────────────────────────────────────────────────
 
-We presented \omni{}, a production multi-agent system for long-horizon agentic tasks organized around a single thesis: reliable long-horizon task completion requires architecturally-enforced plan grounding, not LLM self-belief. This thesis generates four concrete mechanisms---a plan-anchored correction loop, tiered \hitl{} with formal trigger conditions, deterministic \fsm{} speaker selection, and memory-mediated capability chaining---each directly eliminating one or more of the five named failure modes. A survey of 35 recent agentic papers confirms that no prior system simultaneously addresses all five failure modes. We verify the \fsm{} exhaustively (15/15 transitions, 0\% error rate, 1.6\,$\mu$s/transition), eliminating $\sim$20{,}000 routing tokens per 50-step task that LLM-based speaker selection would otherwise consume, and confirm end-to-end orchestration correctness on 5 live tasks through the full 9-agent loop. Single-domain coding agents score 0 on our structural impossibility task category by architectural necessity, not capability. Full ablation comparisons are defined as experimental protocols in Section~\ref{sec:experiments} and will be reported in the camera-ready version. Two future architectural directions---sub-agent peer delegation and an async execution monitor with bidirectional user channel---are described in Section~\ref{sec:discussion} as the foundation for \omni{} 2.0. Full implementation is available at \url{https://github.com/Ravian-Omni/omni-backend}.
+We presented \omni{}, a production multi-agent system for long-horizon agentic tasks organized around a single thesis: reliable long-horizon task completion requires architecturally-enforced plan grounding, not LLM self-belief. This thesis generates four concrete mechanisms---a plan-anchored correction loop, tiered \hitl{} with formal trigger conditions, deterministic \fsm{} speaker selection, and memory-mediated capability chaining---each directly eliminating one or more of the five named failure modes. A survey of 35 recent agentic papers confirms that no prior system simultaneously addresses all five failure modes. We verify the \fsm{} exhaustively (15/15 transitions, 0\% error rate, 1.6\,$\mu$s/transition), eliminating $\sim$20{,}000 routing tokens per 50-step task that LLM-based speaker selection would otherwise consume, and confirm end-to-end orchestration correctness on 5 live tasks through the full 9-agent loop. Single-domain coding agents score 0 on our structural impossibility task category by architectural necessity, not capability. Full ablation comparisons are defined as experimental protocols in Section~\ref{sec:experiments} and will be reported in the camera-ready version. Two future architectural directions---sub-agent peer delegation and an async execution monitor with bidirectional user channel---are described in Section~\ref{sec:discussion} as the foundation for \omni{} 2.0. Full implementation is available at \url{https://github.com/OMNI-Omni/omni-backend}.
 
 % ─────────────────────────────────────────────────────────────────
 \bibliography{omni_references}
